@@ -16,6 +16,15 @@ export default function LoginPage() {
             Inscription
           </Link>
         </p>
+        <Link
+          href="/"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour à l&apos;accueil
+        </Link>
       </div>
     </div>
   );

@@ -109,7 +109,7 @@ export function ChatThreadClient({
     <>
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-800 px-4"
+        className="flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 px-4"
       >
         <MessageThread messages={optimisticMessages} />
       </div>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
+import { audit } from "@/server/domain/auditLog";
 
 const CreateTeacherSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -18,7 +19,7 @@ export async function createTeacher(
   _prev: ActionState | undefined,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ADMIN");
+  const admin = await requireRole("ADMIN");
 
   const subjectIds = formData.getAll("subjectIds").map(String);
   const parsed = CreateTeacherSchema.safeParse({
@@ -48,6 +49,13 @@ export async function createTeacher(
         },
       },
     },
+  });
+
+  await audit({
+    userId: admin.id,
+    action: "teacher.create",
+    entityType: "User",
+    payload: { email: parsed.data.email, name: parsed.data.name },
   });
 
   revalidatePath("/admin/teachers");
@@ -92,7 +100,7 @@ export async function updateTeacher(
 }
 
 export async function deleteTeacher(formData: FormData): Promise<void> {
-  await requireRole("ADMIN");
+  const admin = await requireRole("ADMIN");
   const userId = formData.get("userId") as string | null;
   if (!userId) return;
 
@@ -108,5 +116,13 @@ export async function deleteTeacher(formData: FormData): Promise<void> {
 
   // onDelete: Cascade on TeacherProfile removes the profile.
   await prisma.user.delete({ where: { id: userId } });
+
+  await audit({
+    userId: admin.id,
+    action: "teacher.delete",
+    entityType: "User",
+    entityId: userId,
+  });
+
   revalidatePath("/admin/teachers");
 }

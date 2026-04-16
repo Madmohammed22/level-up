@@ -8,8 +8,14 @@ const LEVEL_LABELS: Record<string, string> = {
   GRADE_12: "Terminale",
 };
 
-export default async function TeacherStudentsPage() {
+export default async function TeacherStudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const user = await requireRole("TEACHER");
+  const params = await searchParams;
+  const query = (params.q ?? "").trim().toLowerCase();
 
   const profile = await prisma.teacherProfile.findUnique({
     where: { userId: user.id },
@@ -89,9 +95,9 @@ export default async function TeacherStudentsPage() {
     else a.pending += 1;
   }
 
-  const students = [...byId.values()].sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  const students = [...byId.values()]
+    .filter((s) => !query || s.name.toLowerCase().includes(query))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <section>
@@ -102,8 +108,34 @@ export default async function TeacherStudentsPage() {
         </p>
       </header>
 
+      <form className="mb-4 flex gap-2">
+        <input
+          name="q"
+          type="text"
+          placeholder="Rechercher par nom..."
+          defaultValue={query}
+          className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+        >
+          Chercher
+        </button>
+        {query && (
+          <a
+            href="/teacher/students"
+            className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          >
+            Effacer
+          </a>
+        )}
+      </form>
+
       {students.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucun élève inscrit.</p>
+        <p className="text-sm text-zinc-500">
+          {query ? `Aucun résultat pour « ${query} ».` : "Aucun élève inscrit."}
+        </p>
       ) : (
         <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
           {students.map((s) => {

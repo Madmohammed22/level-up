@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SignOutButton } from "./SignOutButton";
 import { NotificationBell } from "./NotificationBell";
 import type { NotificationRow } from "@/server/actions/notifications";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavUser = { name: string | null; email: string; role: string };
 
@@ -27,6 +28,7 @@ export function Navbar({
           LEVEL UP
         </Link>
         <div className="flex items-center gap-3 text-sm">
+          {/* <ThemeToggle /> */}
           <NotificationBell
             initial={notifications}
             initialUnread={unreadCount}

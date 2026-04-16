@@ -5,12 +5,23 @@ import { deleteTeacher } from "@/server/actions/admin/teachers";
 import { CreateTeacherForm } from "./CreateTeacherForm";
 import { EditTeacherForm } from "./EditTeacherForm";
 
-export default async function AdminTeachersPage() {
+export default async function AdminTeachersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await requireRole("ADMIN");
+  const params = await searchParams;
+  const query = (params.q ?? "").trim();
 
   const [teachers, subjects] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "TEACHER" },
+      where: {
+        role: "TEACHER",
+        ...(query
+          ? { name: { contains: query, mode: "insensitive" as const } }
+          : {}),
+      },
       orderBy: { name: "asc" },
       include: {
         teacherProfile: {
@@ -48,9 +59,38 @@ export default async function AdminTeachersPage() {
         </div>
 
         <div>
-          <h2 className="text-sm font-medium mb-3">Liste</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium">
+              Liste ({teachers.length})
+            </h2>
+          </div>
+          <form className="mb-3 flex gap-2">
+            <input
+              name="q"
+              type="text"
+              placeholder="Rechercher par nom..."
+              defaultValue={query}
+              className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+            >
+              Chercher
+            </button>
+            {query && (
+              <a
+                href="/admin/teachers"
+                className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+              >
+                Effacer
+              </a>
+            )}
+          </form>
           {teachers.length === 0 ? (
-            <p className="text-sm text-zinc-500">Aucun professeur.</p>
+            <p className="text-sm text-zinc-500">
+              {query ? `Aucun résultat pour « ${query} ».` : "Aucun professeur."}
+            </p>
           ) : (
             <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
               {teachers.map((t) => {

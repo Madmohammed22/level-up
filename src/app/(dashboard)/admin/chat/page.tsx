@@ -19,8 +19,14 @@ function fmt(d: Date): string {
   ).padStart(2, "0")}`;
 }
 
-export default async function AdminChatInboxPage() {
+export default async function AdminChatInboxPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const admin = await requireRole("ADMIN");
+  const params = await searchParams;
+  const query = (params.q ?? "").trim().toLowerCase();
 
   const [conversations, students] = await Promise.all([
     prisma.conversation.findMany({
@@ -51,6 +57,13 @@ export default async function AdminChatInboxPage() {
     }),
   ]);
 
+  const filteredConversations = query
+    ? conversations.filter((c) => {
+        const name = (c.student?.user.name ?? c.teacher?.user.name ?? "").toLowerCase();
+        return name.includes(query);
+      })
+    : conversations;
+
   const convoStudentUserIds = new Set(
     conversations.filter((c) => c.student).map((c) => c.student!.user.id),
   );
@@ -78,14 +91,41 @@ export default async function AdminChatInboxPage() {
         )}
       </div>
 
-      {conversations.length === 0 ? (
+      {conversations.length > 0 && (
+        <form className="mb-4 flex gap-2">
+          <input
+            name="q"
+            type="text"
+            placeholder="Rechercher par nom..."
+            defaultValue={query}
+            className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+          >
+            Chercher
+          </button>
+          {query && (
+            <a
+              href="/admin/chat"
+              className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            >
+              Effacer
+            </a>
+          )}
+        </form>
+      )}
+
+      {filteredConversations.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          Aucune conversation. Utilise «&nbsp;Nouveau message&nbsp;» pour en
-          démarrer une.
+          {query
+            ? `Aucun résultat pour « ${query} ».`
+            : "Aucune conversation. Utilise « Nouveau message » pour en démarrer une."}
         </p>
       ) : (
         <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
-          {conversations.map((c) => {
+          {filteredConversations.map((c) => {
             const last = c.messages[0];
             const unread = c._count.messages;
             return (
@@ -95,7 +135,7 @@ export default async function AdminChatInboxPage() {
                   className="block px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="font-medium truncate">
                         {c.student?.user.name ?? c.teacher?.user.name ?? "—"}
                         {c.teacher && !c.student ? (
@@ -103,7 +143,11 @@ export default async function AdminChatInboxPage() {
                         ) : null}
                       </div>
                       <div className="text-xs text-zinc-500 truncate">
-                        {last?.content ?? "— aucun message —"}
+                        {last
+                          ? last.content.length > 80
+                            ? last.content.slice(0, 80) + "…"
+                            : last.content
+                          : "— aucun message —"}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

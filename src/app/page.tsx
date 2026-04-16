@@ -13,13 +13,13 @@ export default function LandingPage() {
       <SolutionSection />
       <FeaturesSection />
       <ResultsSection />
-      <section id="reserver" className="bg-zinc-50 py-20 dark:bg-zinc-900">
-        <div className="mx-auto max-w-xl px-6">
-          <h2 className="text-3xl font-semibold text-center mb-6">
-            Réserver une séance
+      <section id="reserver" className="py-24 px-6 bg-white dark:bg-zinc-950">
+        <div className="mx-auto max-w-xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-zinc-900 dark:text-zinc-50 mb-4">
+            R&eacute;server une s&eacute;ance
           </h2>
-          <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
-            Laissez-nous vos coordonnées, nous revenons vers vous rapidement.
+          <p className="text-center text-lg text-zinc-500 dark:text-zinc-400 mb-10">
+            Laissez-nous vos coordonn&eacute;es, nous revenons vers vous rapidement.
           </p>
           <CTAForm />
         </div>

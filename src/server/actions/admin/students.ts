@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
+import { audit } from "@/server/domain/auditLog";
 import { LevelSchema } from "@/types/schemas";
 
 const CreateStudentSchema = z.object({
@@ -28,7 +29,7 @@ export async function createStudent(
   _prev: ActionState | undefined,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireRole("ADMIN");
+  const admin = await requireRole("ADMIN");
 
   const subjectIds = formData.getAll("subjectIds").map(String);
   const parsed = CreateStudentSchema.safeParse({
@@ -78,6 +79,13 @@ export async function createStudent(
     },
   });
 
+  await audit({
+    userId: admin.id,
+    action: "student.create",
+    entityType: "User",
+    payload: { email: parsed.data.email, name: parsed.data.name },
+  });
+
   revalidatePath("/admin/students");
   return { ok: true };
 }
@@ -123,7 +131,7 @@ export async function updateStudent(
 }
 
 export async function deleteStudent(formData: FormData): Promise<void> {
-  await requireRole("ADMIN");
+  const admin = await requireRole("ADMIN");
   const userId = formData.get("userId") as string | null;
   if (!userId) return;
 
@@ -135,5 +143,13 @@ export async function deleteStudent(formData: FormData): Promise<void> {
   if (student && student._count.enrollments > 0) return;
 
   await prisma.user.delete({ where: { id: userId } });
+
+  await audit({
+    userId: admin.id,
+    action: "student.delete",
+    entityType: "User",
+    entityId: userId,
+  });
+
   revalidatePath("/admin/students");
 }

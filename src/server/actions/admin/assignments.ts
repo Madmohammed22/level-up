@@ -25,6 +25,7 @@ import {
   sessionAssignedInputs,
   sessionCancelledInputs,
 } from "@/server/domain/notifications/create";
+import { audit } from "@/server/domain/auditLog";
 
 const WeekStartSchema = z.object({
   weekStart: z.string().min(8), // ISO date, e.g. "2026-04-13"
@@ -287,6 +288,14 @@ export async function commitAssignments(
     await notifyMany(inputs);
   }
 
+  const admin = await requireRole("ADMIN");
+  await audit({
+    userId: admin.id,
+    action: "assignment.commit",
+    entityType: "Session",
+    payload: { weekStart: weekStart.toISOString(), created },
+  });
+
   revalidatePath("/admin/assignments");
   revalidatePath("/admin/sessions");
   return { ok: true, created };
@@ -295,7 +304,7 @@ export async function commitAssignments(
 // ---- Session cancellation ----
 
 export async function cancelSession(formData: FormData): Promise<void> {
-  await requireRole("ADMIN");
+  const admin = await requireRole("ADMIN");
   const id = formData.get("id") as string | null;
   if (!id) return;
 
@@ -328,6 +337,14 @@ export async function cancelSession(formData: FormData): Promise<void> {
       }),
     );
   }
+
+  await audit({
+    userId: admin.id,
+    action: "session.cancel",
+    entityType: "Session",
+    entityId: id,
+    payload: { subjectName: session?.subject.name },
+  });
 
   revalidatePath("/admin/sessions");
   revalidatePath("/student/schedule");
