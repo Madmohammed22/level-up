@@ -1,0 +1,22 @@
+import Link from "next/link";
+import { LoginForm } from "./LoginForm";
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-[70vh] items-center justify-center px-6 py-20">
+      <div className="w-full max-w-sm rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 bg-white/60 dark:bg-zinc-900/60 backdrop-blur">
+        <h1 className="text-2xl font-semibold mb-2">Connexion</h1>
+        <p className="text-sm text-zinc-500 mb-6">
+          Accède à ton espace élève, prof ou admin.
+        </p>
+        <LoginForm />
+        <p className="mt-6 text-sm text-zinc-500">
+          Pas encore de compte ?{" "}
+          <Link href="/register" className="font-medium underline">
+            Inscription
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

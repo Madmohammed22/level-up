@@ -1,0 +1,477 @@
+// LEVEL UP — Prisma schema
+// Tutoring center management: students, teachers, sessions, auto-assignment,
+// chat, notifications, mood check-ins, methodology content.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// =====================================================================
+// Enums
+// =====================================================================
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum Level {
+  GRADE_9
+  GRADE_10
+  GRADE_11
+  GRADE_12
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum AvailabilityPreference {
+  PREFERRED
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum SessionStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PENDING
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum RecurrenceKind {
+  ONE_OFF
+  WEEKLY
+}
+
+enum ContentType {
+  MICRO_LESSON
+  EXERCISE
+  PROTOCOL
+  TEMPLATE
+}
+
+enum ContentCategory {
+  STRESS
+  METHODOLOGY
+  TIME_MANAGEMENT
+  EXAM_PREP
+}
+
+enum MoodType {
+  PRE_SESSION
+  POST_SESSION
+  DAILY
+  PRE_EXAM
+  POST_EXAM
+}
+
+enum NotificationType {
+  SESSION_ASSIGNED
+  SESSION_UPDATED
+  SESSION_CANCELLED
+  NEW_MESSAGE
+  EXAM_APPROACHING
+  MOOD_REMINDER
+  GENERIC
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  ENROLLED
+  CLOSED
+}
+
+// =====================================================================
+// Users & Profiles
+// =====================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  // Mirrors supabase.auth.users.id (UUID as string). Set after signup.
+  authId    String?  @unique
+  email     String   @unique
+  name      String
+  role      UserRole @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+
+  sentMessages         Message[]      @relation("SentMessages")
+  conversationsAsAdmin Conversation[] @relation("AdminConversations")
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@index([role])
+}
+
+model StudentProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level         Level
+  phone         String?
+  guardianEmail String?
+  guardianPhone String?
+  notes         String?
+
+  subjects           Subject[]             @relation("StudentSubjects")
+  enrollments        Enrollment[]
+  availabilities     StudentAvailability[]
+  moodCheckIns       MoodCheckIn[]
+  contentCompletions ContentCompletion[]
+  examDates          ExamDate[]
+  conversations      Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([level])
+}
+
+model TeacherProfile {
+  id     String  @id @default(cuid())
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio    String?
+
+  subjects         Subject[]             @relation("TeacherSubjects")
+  sessions         Session[]
+  sessionTemplates SessionTemplate[]
+  availabilities   TeacherAvailability[]
+  conversations    Conversation[]        @relation("TeacherConversations")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =====================================================================
+// Academic catalog
+// =====================================================================
+
+model Subject {
+  id   String @id @default(cuid())
+  name String @unique // "Maths", "Physique", "Francais"
+
+  students         StudentProfile[]     @relation("StudentSubjects")
+  teachers         TeacherProfile[]     @relation("TeacherSubjects")
+  sessions         Session[]
+  sessionTemplates SessionTemplate[]
+  compatibilities  LevelCompatibility[]
+  examDates        ExamDate[]
+}
+
+// Admin-configurable: can two levels share the same class for a given subject?
+model LevelCompatibility {
+  id         String  @id @default(cuid())
+  subjectId  String
+  subject    Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  levelA     Level
+  levelB     Level
+  compatible Boolean @default(false)
+
+  @@unique([subjectId, levelA, levelB])
+  @@index([subjectId])
+}
+
+// =====================================================================
+// Physical resources
+// =====================================================================
+
+model Room {
+  id       String @id @default(cuid())
+  name     String @unique
+  capacity Int    @default(10)
+
+  sessions         Session[]
+  sessionTemplates SessionTemplate[]
+}
+
+model TimeSlot {
+  id        String    @id @default(cuid())
+  dayOfWeek DayOfWeek
+  startTime String // "16:00" (24h, local)
+  endTime   String // "17:30"
+
+  teacherAvailabilities TeacherAvailability[]
+  studentAvailabilities StudentAvailability[]
+  sessions              Session[]
+  sessionTemplates      SessionTemplate[]
+
+  @@unique([dayOfWeek, startTime, endTime])
+}
+
+// =====================================================================
+// Availability
+// =====================================================================
+
+model TeacherAvailability {
+  id         String         @id @default(cuid())
+  teacherId  String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  timeSlotId String
+  timeSlot   TimeSlot       @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  available  Boolean        @default(true)
+
+  @@unique([teacherId, timeSlotId])
+}
+
+model StudentAvailability {
+  id         String                 @id @default(cuid())
+  studentId  String
+  student    StudentProfile         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  timeSlotId String
+  timeSlot   TimeSlot               @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  preference AvailabilityPreference @default(AVAILABLE)
+
+  @@unique([studentId, timeSlotId])
+}
+
+// =====================================================================
+// Sessions
+// =====================================================================
+
+// Recurring template (e.g. Monday 16:00 Maths with Mrs Durand in Room A).
+// Generates concrete Session instances per week.
+model SessionTemplate {
+  id          String         @id @default(cuid())
+  subjectId   String
+  subject     Subject        @relation(fields: [subjectId], references: [id])
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  roomId      String
+  room        Room           @relation(fields: [roomId], references: [id])
+  timeSlotId  String
+  timeSlot    TimeSlot       @relation(fields: [timeSlotId], references: [id])
+  maxCapacity Int            @default(10)
+  // Levels included in this class (supports mutualization).
+  levels      Level[]
+  recurrence  RecurrenceKind @default(WEEKLY)
+  validFrom   DateTime
+  validUntil  DateTime?
+  createdAt   DateTime       @default(now())
+
+  sessions Session[]
+
+  @@index([subjectId, teacherId])
+}
+
+// Concrete instance on a specific date.
+model Session {
+  id          String           @id @default(cuid())
+  templateId  String?
+  template    SessionTemplate? @relation(fields: [templateId], references: [id])
+  subjectId   String
+  subject     Subject          @relation(fields: [subjectId], references: [id])
+  teacherId   String
+  teacher     TeacherProfile   @relation(fields: [teacherId], references: [id])
+  roomId      String
+  room        Room             @relation(fields: [roomId], references: [id])
+  timeSlotId  String
+  timeSlot    TimeSlot         @relation(fields: [timeSlotId], references: [id])
+  date        DateTime // Calendar date (YYYY-MM-DD at 00:00 local)
+  startAt     DateTime
+  endAt       DateTime
+  maxCapacity Int              @default(10)
+  levels      Level[]
+  status      SessionStatus    @default(DRAFT)
+
+  methodologyCardId String?
+  methodologyCard   ContentItem? @relation("SessionMethodologyCard", fields: [methodologyCardId], references: [id])
+
+  enrollments  Enrollment[]
+  moodCheckIns MoodCheckIn[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, startAt]) // prevents double-booking a room at same start
+  @@index([date])
+  @@index([subjectId, date])
+  @@index([teacherId, date])
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  studentId  String
+  student    StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sessionId  String
+  session    Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  status     EnrollmentStatus @default(CONFIRMED)
+  attendance AttendanceStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+
+  @@unique([studentId, sessionId])
+  @@index([sessionId])
+}
+
+// =====================================================================
+// Messaging
+// =====================================================================
+
+model Conversation {
+  id        String          @id @default(cuid())
+  studentId String?         @unique // one open conversation per student
+  student   StudentProfile? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacherId String?         @unique // one open conversation per teacher
+  teacher   TeacherProfile? @relation("TeacherConversations", fields: [teacherId], references: [id], onDelete: Cascade)
+  adminId   String?
+  admin     User?           @relation("AdminConversations", fields: [adminId], references: [id])
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  messages Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// =====================================================================
+// Notifications
+// =====================================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+// =====================================================================
+// Wellbeing (the differentiator)
+// =====================================================================
+
+model MoodCheckIn {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sessionId String?
+  session   Session?       @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  type      MoodType
+  score     Int // 1..5
+  note      String?
+  createdAt DateTime       @default(now())
+
+  @@index([studentId, createdAt])
+}
+
+model ContentItem {
+  id          String          @id @default(cuid())
+  title       String
+  type        ContentType
+  category    ContentCategory
+  body        String // Markdown
+  durationSec Int? // For timed exercises (breathing, grounding)
+  published   Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  completions         ContentCompletion[]
+  sessionsUsingAsCard Session[]           @relation("SessionMethodologyCard")
+
+  @@index([category, type])
+}
+
+model ContentCompletion {
+  id            String         @id @default(cuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  contentItemId String
+  contentItem   ContentItem    @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  completedAt   DateTime       @default(now())
+
+  @@unique([studentId, contentItemId])
+  @@index([studentId, completedAt])
+}
+
+model ExamDate {
+  id                String         @id @default(cuid())
+  studentId         String
+  student           StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId         String
+  subject           Subject        @relation(fields: [subjectId], references: [id])
+  date              DateTime
+  protocolActivated Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+
+  @@index([studentId, date])
+}
+
+// =====================================================================
+// Landing / lead capture
+// =====================================================================
+
+model LeadSubmission {
+  id        String     @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String?
+  status    LeadStatus @default(NEW)
+  source    String? // "landing-hero", "landing-cta", etc.
+  createdAt DateTime   @default(now())
+
+  @@index([status, createdAt])
+}
+
+// =====================================================================
+// Audit
+// =====================================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // "session.create", "assignment.approve", etc.
+  entityType String
+  entityId   String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+}
