@@ -1,6 +1,7 @@
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { markContentDone, unmarkContentDone } from "@/server/actions/student/content";
+import { BreathingExercise } from "@/components/student/BreathingExercise";
 
 const CATEGORY_LABELS: Record<string, string> = {
   STRESS: "Stress",
@@ -92,6 +93,11 @@ export default async function StudentMethodologyPage({
           gagner en confiance.
         </p>
       </header>
+
+      {/* Breathing exercise */}
+      <div className="mb-6">
+        <BreathingExercise />
+      </div>
 
       {/* Progress overview */}
       <div className="mb-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">

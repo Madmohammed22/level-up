@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { UserRole } from "@/generated/prisma/enums";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-type NavLink = { href: string; label: string };
+export type NavLink = { href: string; label: string };
 
-const LINKS: Record<UserRole, NavLink[]> = {
+export const LINKS: Record<UserRole, NavLink[]> = {
   ADMIN: [
     { href: "/admin", label: "Tableau de bord" },
     { href: "/admin/students", label: "\u00c9l\u00e8ves" },
