@@ -114,6 +114,45 @@ export async function signUp(
   redirect("/student");
 }
 
+export async function forgotPassword(
+  _prev: AuthState | undefined,
+  formData: FormData,
+): Promise<AuthState & { ok?: boolean }> {
+  const email = (formData.get("email") as string | null)?.trim();
+  if (!email || !z.string().email().safeParse(email).success) {
+    return { error: "Email invalide" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/api/auth/callback?next=/reset-password`,
+  });
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { ok: true };
+}
+
+export async function resetPassword(
+  _prev: AuthState | undefined,
+  formData: FormData,
+): Promise<AuthState & { ok?: boolean }> {
+  const password = formData.get("password") as string | null;
+  if (!password || password.length < 8) {
+    return { error: "Mot de passe: 8 caractères minimum" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { ok: true };
+}
+
 export async function signOut() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();

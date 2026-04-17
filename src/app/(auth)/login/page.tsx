@@ -10,7 +10,15 @@ export default function LoginPage() {
           Accède à ton espace élève, prof ou admin.
         </p>
         <LoginForm />
-        <p className="mt-6 text-sm text-zinc-500">
+        <div className="mt-4 text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
+        <p className="mt-4 text-sm text-zinc-500">
           Pas encore de compte ?{" "}
           <Link href="/register" className="font-medium underline">
             Inscription

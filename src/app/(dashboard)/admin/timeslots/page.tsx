@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CreateTimeSlotForm } from "./CreateTimeSlotForm";
 import { DeleteSlotButton } from "./DeleteSlotButton";
+import type { DayOfWeek } from "@/generated/prisma/enums";
 
 const DAY_LABELS: Record<string, string> = {
   MONDAY: "Lundi",
@@ -34,7 +35,7 @@ export default async function AdminTimeSlotsPage({
   const dayFilter = params.day ?? "";
 
   const slots = await prisma.timeSlot.findMany({
-    where: dayFilter ? { dayOfWeek: dayFilter } : undefined,
+    where: dayFilter ? { dayOfWeek: dayFilter as DayOfWeek } : undefined,
     include: {
       _count: {
         select: {

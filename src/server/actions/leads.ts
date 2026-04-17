@@ -2,6 +2,7 @@
 
 import { prisma } from "@/server/db/prisma";
 import { LeadSubmissionSchema } from "@/types/schemas";
+import { notifyAdmins } from "@/server/domain/notify";
 
 export async function submitLead(
   formData: FormData,
@@ -33,6 +34,15 @@ export async function submitLead(
         source: parsed.data.source || "landing",
       },
     });
+
+    // Notify all admins about new lead
+    await notifyAdmins({
+      type: "GENERIC",
+      title: "Nouveau lead",
+      body: `${parsed.data.name} (${parsed.data.email}) souhaite réserver une séance.`,
+      data: { name: parsed.data.name, email: parsed.data.email },
+    });
+
     return { ok: true };
   } catch {
     return { ok: false, error: "Erreur serveur. Réessayez plus tard." };
