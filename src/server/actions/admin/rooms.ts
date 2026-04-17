@@ -36,18 +36,30 @@ export async function createRoom(
   return { ok: true };
 }
 
-export async function deleteRoom(formData: FormData): Promise<void> {
+export type DeleteState = { error?: string };
+
+export async function deleteRoom(
+  _prev: DeleteState | undefined,
+  formData: FormData,
+): Promise<DeleteState> {
   await requireRole("ADMIN");
   const id = formData.get("id") as string | null;
-  if (!id) return;
+  if (!id) return { error: "ID manquant" };
 
   const room = await prisma.room.findUnique({
     where: { id },
     include: { _count: { select: { sessions: true, sessionTemplates: true } } },
   });
-  if (!room) return;
-  if (room._count.sessions + room._count.sessionTemplates > 0) return;
+  if (!room) return { error: "Salle introuvable" };
+
+  const refs = room._count.sessions + room._count.sessionTemplates;
+  if (refs > 0) {
+    return {
+      error: `Impossible : ${room._count.sessions} séance(s) et ${room._count.sessionTemplates} modèle(s) utilisent cette salle.`,
+    };
+  }
 
   await prisma.room.delete({ where: { id } });
   revalidatePath("/admin/rooms");
+  return {};
 }

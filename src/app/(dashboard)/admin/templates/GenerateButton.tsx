@@ -9,7 +9,7 @@ export function GenerateButton({ templateId }: { templateId: string }) {
 
   return (
     <form
-      className="inline-flex items-center gap-2"
+      className="flex items-center gap-2 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-3 py-1.5"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -40,8 +40,12 @@ export function GenerateButton({ templateId }: { templateId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50"
       >
+        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14" />
+          <path d="M5 12h14" />
+        </svg>
         {pending ? "..." : "Générer"}
       </button>
       {result && (

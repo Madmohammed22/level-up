@@ -21,6 +21,7 @@ const LINKS: Record<UserRole, NavLink[]> = {
     { href: "/admin/leads", label: "Leads" },
     { href: "/admin/audit", label: "Journal" },
     { href: "/admin/chat", label: "Messages" },
+    { href: "/admin/profile", label: "Mon profil" },
   ],
   TEACHER: [
     { href: "/teacher", label: "Accueil" },

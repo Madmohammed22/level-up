@@ -52,10 +52,15 @@ export async function createTimeSlot(
   return { ok: true };
 }
 
-export async function deleteTimeSlot(formData: FormData): Promise<void> {
+export type DeleteState = { error?: string };
+
+export async function deleteTimeSlot(
+  _prev: DeleteState | undefined,
+  formData: FormData,
+): Promise<DeleteState> {
   await requireRole("ADMIN");
   const id = formData.get("id") as string | null;
-  if (!id) return;
+  if (!id) return { error: "ID manquant" };
 
   const slot = await prisma.timeSlot.findUnique({
     where: { id },
@@ -64,20 +69,22 @@ export async function deleteTimeSlot(formData: FormData): Promise<void> {
         select: {
           sessions: true,
           sessionTemplates: true,
-          teacherAvailabilities: true,
-          studentAvailabilities: true,
         },
       },
     },
   });
-  if (!slot) return;
-  const refs =
-    slot._count.sessions +
-    slot._count.sessionTemplates +
-    slot._count.teacherAvailabilities +
-    slot._count.studentAvailabilities;
-  if (refs > 0) return;
+  if (!slot) return { error: "Créneau introuvable" };
 
+  // Block if sessions or templates reference this slot
+  const hardRefs = slot._count.sessions + slot._count.sessionTemplates;
+  if (hardRefs > 0) {
+    return {
+      error: `Impossible : ${slot._count.sessions} séance(s) et ${slot._count.sessionTemplates} modèle(s) utilisent ce créneau. Supprimez-les d'abord.`,
+    };
+  }
+
+  // Availabilities cascade-delete automatically (onDelete: Cascade in schema)
   await prisma.timeSlot.delete({ where: { id } });
   revalidatePath("/admin/timeslots");
+  return {};
 }

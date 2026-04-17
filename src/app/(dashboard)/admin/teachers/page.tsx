@@ -1,9 +1,9 @@
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { deleteTeacher } from "@/server/actions/admin/teachers";
 import { CreateTeacherForm } from "./CreateTeacherForm";
 import { EditTeacherForm } from "./EditTeacherForm";
+import { DeleteTeacherButton } from "./DeleteTeacherButton";
 
 export default async function AdminTeachersPage({
   searchParams,
@@ -74,15 +74,23 @@ export default async function AdminTeachersPage({
             />
             <button
               type="submit"
-              className="rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
             >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
               Chercher
             </button>
             {query && (
               <a
                 href="/admin/teachers"
-                className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900"
               >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
                 Effacer
               </a>
             )}
@@ -95,10 +103,6 @@ export default async function AdminTeachersPage({
             <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800">
               {teachers.map((t) => {
                 const p = t.teacherProfile;
-                const inUse =
-                  (p?._count.sessions ?? 0) +
-                    (p?._count.sessionTemplates ?? 0) >
-                  0;
                 return (
                   <li
                     key={t.id}
@@ -134,19 +138,7 @@ export default async function AdminTeachersPage({
                         />
                       ) : null}
                     </div>
-                    {!inUse ? (
-                      <form action={deleteTeacher}>
-                        <input type="hidden" name="userId" value={t.id} />
-                        <button
-                          type="submit"
-                          className="text-xs text-red-600 hover:underline"
-                        >
-                          Supprimer
-                        </button>
-                      </form>
-                    ) : (
-                      <span className="text-xs text-zinc-400">en usage</span>
-                    )}
+                    <DeleteTeacherButton userId={t.id} />
                   </li>
                 );
               })}

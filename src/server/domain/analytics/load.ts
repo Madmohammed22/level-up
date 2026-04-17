@@ -12,9 +12,9 @@ import {
   type WeekBucket,
 } from "@/server/domain/analytics/sessionsOverTime";
 import {
-  dailyMoodAverages,
-  type MoodDay,
-} from "@/server/domain/analytics/moodTrends";
+  dailyAttendanceRates,
+  type AttendanceDay,
+} from "@/server/domain/analytics/attendanceTrend";
 import {
   enrollmentMatrix,
   type MatrixCell,
@@ -29,7 +29,7 @@ export type AdminDashboardData = {
   };
   fillRateBySubject: Array<{ subject: string; fillRate: number }>;
   sessionsPerWeek: Array<WeekBucket & { label: string }>;
-  moodLast14Days: MoodDay[];
+  attendanceLast14Days: AttendanceDay[];
   levelSubjectMatrix: {
     subjects: Array<{ id: string; name: string }>;
     levels: string[];
@@ -51,7 +51,7 @@ export async function loadAdminDashboardData(): Promise<AdminDashboardData> {
     allSessions,
     subjects,
     enrollments,
-    moodCheckIns,
+    attendanceEnrollments,
   ] = await Promise.all([
     prisma.studentProfile.count(),
     prisma.teacherProfile.count(),
@@ -84,11 +84,18 @@ export async function loadAdminDashboardData(): Promise<AdminDashboardData> {
         student: { select: { level: true } },
       },
     }),
-    prisma.moodCheckIn.findMany({
+    prisma.enrollment.findMany({
       where: {
-        createdAt: { gte: daysAgo(now, 14) },
+        status: "CONFIRMED",
+        session: {
+          status: { not: "CANCELLED" },
+          startAt: { gte: daysAgo(now, 14) },
+        },
       },
-      select: { createdAt: true, score: true },
+      select: {
+        attendance: true,
+        session: { select: { startAt: true } },
+      },
     }),
   ]);
 
@@ -116,8 +123,15 @@ export async function loadAdminDashboardData(): Promise<AdminDashboardData> {
     label: shortWeekLabel(b.weekStart),
   }));
 
-  // ---- mood last 14 days ----
-  const moodLast14Days = dailyMoodAverages(moodCheckIns, 14, now);
+  // ---- attendance last 14 days ----
+  const attendanceLast14Days = dailyAttendanceRates(
+    attendanceEnrollments.map((e) => ({
+      sessionDate: e.session.startAt,
+      attendance: e.attendance,
+    })),
+    14,
+    now,
+  );
 
   // ---- level × subject matrix ----
   const LEVELS = ["GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
@@ -141,7 +155,7 @@ export async function loadAdminDashboardData(): Promise<AdminDashboardData> {
     },
     fillRateBySubject: perSubject,
     sessionsPerWeek,
-    moodLast14Days,
+    attendanceLast14Days,
     levelSubjectMatrix: {
       subjects,
       levels: LEVELS,

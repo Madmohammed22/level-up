@@ -5,7 +5,7 @@ import { sendExamReminders } from "@/server/domain/notifications/examReminders";
 import { KpiCard } from "@/components/admin/analytics/KpiCard";
 import { FillRateChart } from "@/components/admin/analytics/FillRateChart";
 import { SessionsChart } from "@/components/admin/analytics/SessionsChart";
-import { MoodChart } from "@/components/admin/analytics/MoodChart";
+import { AttendanceChart } from "@/components/admin/analytics/AttendanceChart";
 import { LevelSubjectHeatmap } from "@/components/admin/analytics/LevelSubjectHeatmap";
 
 export default async function AdminHomePage() {
@@ -88,10 +88,10 @@ export default async function AdminHomePage() {
         </ChartCard>
 
         <ChartCard
-          title="Humeur moyenne"
-          subtitle="14 derniers jours (1 = bas, 5 = haut)"
+          title="Taux de présence"
+          subtitle="14 derniers jours (% présent + retard)"
         >
-          <MoodChart data={data.moodLast14Days} />
+          <AttendanceChart data={data.attendanceLast14Days} />
         </ChartCard>
 
         <ChartCard

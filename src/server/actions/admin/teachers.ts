@@ -99,22 +99,31 @@ export async function updateTeacher(
   return { ok: true };
 }
 
-export async function deleteTeacher(formData: FormData): Promise<void> {
+export type DeleteState = { error?: string };
+
+export async function deleteTeacher(
+  _prev: DeleteState | undefined,
+  formData: FormData,
+): Promise<DeleteState> {
   const admin = await requireRole("ADMIN");
   const userId = formData.get("userId") as string | null;
-  if (!userId) return;
+  if (!userId) return { error: "ID manquant" };
 
-  // Guard: don't delete if teacher has any sessions/templates.
   const teacher = await prisma.teacherProfile.findUnique({
     where: { userId },
     include: {
       _count: { select: { sessions: true, sessionTemplates: true } },
     },
   });
-  if (teacher && teacher._count.sessions + teacher._count.sessionTemplates > 0)
-    return;
+  if (!teacher) return { error: "Professeur introuvable" };
 
-  // onDelete: Cascade on TeacherProfile removes the profile.
+  const refs = teacher._count.sessions + teacher._count.sessionTemplates;
+  if (refs > 0) {
+    return {
+      error: `Impossible : ${teacher._count.sessions} séance(s) et ${teacher._count.sessionTemplates} modèle(s) liés. Supprimez-les d'abord.`,
+    };
+  }
+
   await prisma.user.delete({ where: { id: userId } });
 
   await audit({
@@ -125,4 +134,5 @@ export async function deleteTeacher(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/admin/teachers");
+  return {};
 }
