@@ -35,6 +35,7 @@ export const LINKS: Record<UserRole, NavLink[]> = {
     { href: "/dashboard/student", label: "Accueil" },
     { href: "/dashboard/student/schedule", label: "Mon planning" },
     { href: "/dashboard/student/availability", label: "Disponibilit\u00e9s" },
+    { href: "/dashboard/student/revisions", label: "R\u00e9visions" },
     { href: "/dashboard/student/methodology", label: "M\u00e9thodologie" },
     { href: "/dashboard/student/exams", label: "Examens" },
     { href: "/dashboard/student/mood", label: "Humeur" },

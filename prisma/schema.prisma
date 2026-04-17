@@ -150,6 +150,7 @@ model StudentProfile {
   contentCompletions ContentCompletion[]
   examDates          ExamDate[]
   conversations      Conversation[]
+  srsSubjects        SrsSubject[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -440,6 +441,72 @@ model ExamDate {
   createdAt         DateTime       @default(now())
 
   @@index([studentId, date])
+}
+
+// =====================================================================
+// Spaced Repetition System (SRS)
+// =====================================================================
+
+enum SrsCardState {
+  NEW
+  LEARNING
+  REVIEW
+}
+
+model SrsSubject {
+  id          String         @id @default(cuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  name        String
+  code        String // Short code e.g. "ANAT"
+  description String?
+  hue         Int            @default(220) // oklch hue for color theming
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  cards SrsCard[]
+
+  @@unique([studentId, name])
+  @@index([studentId])
+}
+
+model SrsCard {
+  id        String       @id @default(cuid())
+  subjectId String
+  subject   SrsSubject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  text      String // Cloze text with {{answer}} markers
+  tag       String? // Optional grouping tag
+
+  // SRS scheduling fields
+  state        SrsCardState @default(NEW)
+  interval     Int          @default(0) // Days until next review
+  stability    Float        @default(0) // Estimated memory stability in days
+  easeFactor   Float        @default(2.5)
+  lapses       Int          @default(0) // Times forgotten
+  repetitions  Int          @default(0)
+  lastReviewAt DateTime?
+  nextReviewAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews SrsReview[]
+
+  @@index([subjectId, nextReviewAt])
+  @@index([subjectId, state])
+}
+
+model SrsReview {
+  id       String  @id @default(cuid())
+  cardId   String
+  card     SrsCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  grade    Int // 1=Again, 2=Hard, 3=Good, 4=Easy
+  correct  Boolean
+  duration Int? // Review time in seconds
+
+  createdAt DateTime @default(now())
+
+  @@index([cardId, createdAt])
 }
 
 // =====================================================================
