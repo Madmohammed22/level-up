@@ -8,7 +8,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/admin", "/teacher", "/student"] as const;
+const PROTECTED_PREFIXES = ["/dashboard/admin", "/dashboard/teacher", "/dashboard/student"] as const;
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -49,7 +49,7 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
+    loginUrl.pathname = "/auth/login";
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }

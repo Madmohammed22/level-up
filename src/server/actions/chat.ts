@@ -16,6 +16,7 @@ import {
   newMessageInput,
   notify,
 } from "@/server/domain/notifications/create";
+import { notifyAdmins } from "@/server/domain/notify";
 
 const SendSchema = z.object({
   content: z.string().trim().min(1, "Message vide").max(4000),
@@ -53,8 +54,7 @@ export async function sendMessageAsStudent(
     },
   });
 
-  // Notify the assigned admin (if any). If the conversation isn't claimed yet,
-  // no-op — the inbox badge on /admin/chat still surfaces it.
+  // Notify the assigned admin, or ALL admins if conversation is unclaimed.
   const convoWithAdmin = await prisma.conversation.findUnique({
     where: { id: convo.id },
     select: { adminId: true },
@@ -69,10 +69,20 @@ export async function sendMessageAsStudent(
         isAdminInbound: true,
       }),
     );
+  } else {
+    await notifyAdmins({
+      type: "NEW_MESSAGE",
+      title: `Nouveau message de ${user.name ?? "Un élève"}`,
+      body: parsed.data.content.slice(0, 140),
+      data: {
+        conversationId: convo.id,
+        href: `/dashboard/admin/chat/${convo.id}`,
+      },
+    });
   }
 
-  revalidatePath("/student/chat");
-  revalidatePath("/admin/chat");
+  revalidatePath("/dashboard/student/chat");
+  revalidatePath("/dashboard/admin/chat");
   return { ok: true };
 }
 
@@ -106,7 +116,7 @@ export async function sendMessageAsTeacher(
     },
   });
 
-  // Notify assigned admin if any
+  // Notify assigned admin, or ALL admins if conversation is unclaimed.
   const convoWithAdmin = await prisma.conversation.findUnique({
     where: { id: convo.id },
     select: { adminId: true },
@@ -121,10 +131,20 @@ export async function sendMessageAsTeacher(
         isAdminInbound: true,
       }),
     );
+  } else {
+    await notifyAdmins({
+      type: "NEW_MESSAGE",
+      title: `Nouveau message de ${user.name ?? "Un professeur"}`,
+      body: parsed.data.content.slice(0, 140),
+      data: {
+        conversationId: convo.id,
+        href: `/dashboard/admin/chat/${convo.id}`,
+      },
+    });
   }
 
-  revalidatePath("/teacher/chat");
-  revalidatePath("/admin/chat");
+  revalidatePath("/dashboard/teacher/chat");
+  revalidatePath("/dashboard/admin/chat");
   return { ok: true };
 }
 
@@ -172,6 +192,7 @@ export async function sendMessageAsAdmin(
       teacher: { select: { userId: true } },
     },
   });
+  const isTeacherConvo = !!convoFull?.teacher;
   const recipientUserId =
     convoFull?.student?.userId ?? convoFull?.teacher?.userId;
   if (recipientUserId) {
@@ -182,13 +203,16 @@ export async function sendMessageAsAdmin(
         preview: parsed.data.content,
         conversationId: convo.id,
         isAdminInbound: false,
+        recipientChatHref: isTeacherConvo
+          ? `/dashboard/teacher/chat`
+          : `/dashboard/student/chat`,
       }),
     );
   }
 
-  revalidatePath(`/admin/chat/${conversationId}`);
-  revalidatePath("/admin/chat");
-  revalidatePath("/student/chat");
+  revalidatePath(`/dashboard/admin/chat/${conversationId}`);
+  revalidatePath("/dashboard/admin/chat");
+  revalidatePath("/dashboard/student/chat");
   return { ok: true };
 }
 
@@ -245,10 +269,10 @@ export async function startConversationAsAdmin(
     }),
   );
 
-  revalidatePath("/admin/chat");
-  revalidatePath(`/admin/chat/${convo.id}`);
-  revalidatePath("/student/chat");
-  redirect(`/admin/chat/${convo.id}`);
+  revalidatePath("/dashboard/admin/chat");
+  revalidatePath(`/dashboard/admin/chat/${convo.id}`);
+  revalidatePath("/dashboard/student/chat");
+  redirect(`/dashboard/admin/chat/${convo.id}`);
 }
 
 export async function markConversationRead(

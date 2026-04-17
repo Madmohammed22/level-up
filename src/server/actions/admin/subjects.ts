@@ -30,7 +30,7 @@ export async function createSubject(
   if (existing) return { error: "Matière déjà existante" };
 
   await prisma.subject.create({ data: { name: parsed.data.name } });
-  revalidatePath("/admin/subjects");
+  revalidatePath("/dashboard/admin/subjects");
   return { ok: true };
 }
 
@@ -62,5 +62,5 @@ export async function deleteSubject(formData: FormData): Promise<void> {
   if (refs > 0) return; // Silent: UI hides delete when inUse
 
   await prisma.subject.delete({ where: { id } });
-  revalidatePath("/admin/subjects");
+  revalidatePath("/dashboard/admin/subjects");
 }

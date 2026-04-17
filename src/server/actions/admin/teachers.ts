@@ -5,10 +5,12 @@ import { z } from "zod";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { audit } from "@/server/domain/auditLog";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const CreateTeacherSchema = z.object({
   email: z.string().email("Email invalide"),
   name: z.string().min(2).max(100),
+  password: z.string().min(8, "Mot de passe: 8 caractères minimum"),
   bio: z.string().max(500).optional(),
   subjectIds: z.array(z.string().min(1)).min(1, "Au moins une matière"),
 });
@@ -25,6 +27,7 @@ export async function createTeacher(
   const parsed = CreateTeacherSchema.safeParse({
     email: (formData.get("email") as string | null)?.trim(),
     name: (formData.get("name") as string | null)?.trim(),
+    password: formData.get("password") as string | null,
     bio: (formData.get("bio") as string | null) || undefined,
     subjectIds,
   });
@@ -37,10 +40,23 @@ export async function createTeacher(
   });
   if (existing) return { error: "Email déjà utilisé" };
 
+  // Create Supabase Auth user so teacher can login
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: authData, error: authError } =
+    await supabaseAdmin.auth.admin.createUser({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      email_confirm: true,
+    });
+  if (authError || !authData.user) {
+    return { error: authError?.message ?? "Impossible de créer le compte auth" };
+  }
+
   await prisma.user.create({
     data: {
       email: parsed.data.email,
       name: parsed.data.name,
+      authId: authData.user.id,
       role: "TEACHER",
       teacherProfile: {
         create: {
@@ -58,7 +74,7 @@ export async function createTeacher(
     payload: { email: parsed.data.email, name: parsed.data.name },
   });
 
-  revalidatePath("/admin/teachers");
+  revalidatePath("/dashboard/admin/teachers");
   return { ok: true };
 }
 
@@ -95,7 +111,7 @@ export async function updateTeacher(
     },
   });
 
-  revalidatePath("/admin/teachers");
+  revalidatePath("/dashboard/admin/teachers");
   return { ok: true };
 }
 
@@ -124,7 +140,19 @@ export async function deleteTeacher(
     };
   }
 
+  // Get authId before deleting Prisma row
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { authId: true },
+  });
+
   await prisma.user.delete({ where: { id: userId } });
+
+  // Also delete from Supabase Auth so email can be reused
+  if (user?.authId) {
+    const supabaseAdmin = createSupabaseAdminClient();
+    await supabaseAdmin.auth.admin.deleteUser(user.authId);
+  }
 
   await audit({
     userId: admin.id,
@@ -133,6 +161,6 @@ export async function deleteTeacher(
     entityId: userId,
   });
 
-  revalidatePath("/admin/teachers");
+  revalidatePath("/dashboard/admin/teachers");
   return {};
 }

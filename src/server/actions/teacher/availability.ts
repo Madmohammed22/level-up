@@ -74,6 +74,6 @@ export async function saveTeacherAvailability(
     ),
   );
 
-  revalidatePath("/teacher/availability");
+  revalidatePath("/dashboard/teacher/availability");
   return { ok: true };
 }

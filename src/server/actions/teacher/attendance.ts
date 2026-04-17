@@ -40,31 +40,37 @@ export async function markAttendance(formData: FormData): Promise<void> {
     data: { attendance: parsed.data },
   });
 
-  revalidatePath(`/teacher/sessions/${enrollment.session.id}/attendance`);
-  revalidatePath("/teacher/schedule");
-  revalidatePath("/teacher/students");
+  revalidatePath(`/dashboard/teacher/sessions/${enrollment.session.id}/attendance`);
+  revalidatePath("/dashboard/teacher/schedule");
+  revalidatePath("/dashboard/teacher/students");
 }
+
+export type AttendanceState = { error?: string; ok?: boolean };
 
 /**
  * Bulk-mark attendance for all enrollments in a session at once.
  * Form field naming: `attendance_<enrollmentId>` with a valid enum value.
  */
-export async function markAttendanceBulk(formData: FormData): Promise<void> {
+export async function markAttendanceBulk(
+  _prev: AttendanceState | undefined,
+  formData: FormData,
+): Promise<AttendanceState> {
   const user = await requireRole("TEACHER");
   const sessionId = formData.get("sessionId") as string | null;
-  if (!sessionId) return;
+  if (!sessionId) return { error: "Séance manquante" };
 
   const teacher = await prisma.teacherProfile.findUnique({
     where: { userId: user.id },
     select: { id: true },
   });
-  if (!teacher) return;
+  if (!teacher) return { error: "Profil introuvable" };
 
   const session = await prisma.session.findUnique({
     where: { id: sessionId },
     select: { teacherId: true, enrollments: { select: { id: true } } },
   });
-  if (!session || session.teacherId !== teacher.id) return;
+  if (!session || session.teacherId !== teacher.id)
+    return { error: "Séance introuvable ou non autorisée" };
 
   const updates: Array<{ id: string; value: (typeof ATTENDANCE_VALUES)[number] }> =
     [];
@@ -77,7 +83,7 @@ export async function markAttendanceBulk(formData: FormData): Promise<void> {
     }
   }
 
-  if (updates.length === 0) return;
+  if (updates.length === 0) return { error: "Aucune présence à enregistrer" };
 
   await prisma.$transaction(
     updates.map((u) =>
@@ -88,7 +94,8 @@ export async function markAttendanceBulk(formData: FormData): Promise<void> {
     ),
   );
 
-  revalidatePath(`/teacher/sessions/${sessionId}/attendance`);
-  revalidatePath("/teacher/schedule");
-  revalidatePath("/teacher/students");
+  revalidatePath(`/dashboard/teacher/sessions/${sessionId}/attendance`);
+  revalidatePath("/dashboard/teacher/schedule");
+  revalidatePath("/dashboard/teacher/students");
+  return { ok: true };
 }

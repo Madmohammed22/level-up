@@ -48,7 +48,7 @@ export async function markNotificationRead(id: string): Promise<void> {
     where: { id, userId: user.id, read: false },
     data: { read: true },
   });
-  revalidatePath("/notifications");
+  revalidatePath("/dashboard/notifications");
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
@@ -57,5 +57,5 @@ export async function markAllNotificationsRead(): Promise<void> {
     where: { userId: user.id, read: false },
     data: { read: true },
   });
-  revalidatePath("/notifications");
+  revalidatePath("/dashboard/notifications");
 }

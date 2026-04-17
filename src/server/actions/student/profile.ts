@@ -51,6 +51,6 @@ export async function updateStudentProfile(
     }),
   ]);
 
-  revalidatePath("/student/profile");
+  revalidatePath("/dashboard/student/profile");
   return { ok: true };
 }

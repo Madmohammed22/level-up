@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/reset-password";
+  const next = searchParams.get("next") ?? "/auth/reset-password";
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -17,5 +17,5 @@ export async function GET(request: NextRequest) {
   }
 
   // If code exchange fails, redirect to login with error
-  return NextResponse.redirect(`${origin}/login`);
+  return NextResponse.redirect(`${origin}/auth/login`);
 }

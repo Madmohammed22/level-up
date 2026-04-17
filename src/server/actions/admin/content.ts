@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
+import { notifyMany, type NotifyInput } from "@/server/domain/notifications/create";
 
 const CONTENT_TYPES = [
   "MICRO_LESSON",
@@ -60,7 +61,7 @@ export async function createContentItem(
     return { error: parsed.error.issues[0]?.message ?? "Entrée invalide" };
   }
 
-  await prisma.contentItem.create({
+  const item = await prisma.contentItem.create({
     data: {
       title: parsed.data.title,
       type: parsed.data.type,
@@ -71,9 +72,25 @@ export async function createContentItem(
     },
   });
 
-  revalidatePath("/admin/content");
-  revalidatePath("/student/methodology");
-  redirect("/admin/content");
+  // Notify all students when published content is created
+  if (item.published) {
+    const students = await prisma.user.findMany({
+      where: { role: "STUDENT" },
+      select: { id: true },
+    });
+    const inputs: NotifyInput[] = students.map((s) => ({
+      userId: s.id,
+      type: "NEW_CONTENT" as const,
+      title: `Nouveau contenu : ${item.title}`,
+      body: `Un nouveau contenu est disponible dans la section Méthodologie.`,
+      data: { href: "/dashboard/student/methodology" },
+    }));
+    await notifyMany(inputs);
+  }
+
+  revalidatePath("/dashboard/admin/content");
+  revalidatePath("/dashboard/student/methodology");
+  redirect("/dashboard/admin/content");
 }
 
 export async function updateContentItem(
@@ -101,10 +118,10 @@ export async function updateContentItem(
     },
   });
 
-  revalidatePath("/admin/content");
-  revalidatePath(`/admin/content/${id}/edit`);
-  revalidatePath("/student/methodology");
-  redirect("/admin/content");
+  revalidatePath("/dashboard/admin/content");
+  revalidatePath(`/dashboard/admin/content/${id}/edit`);
+  revalidatePath("/dashboard/student/methodology");
+  redirect("/dashboard/admin/content");
 }
 
 export async function toggleContentItemPublished(
@@ -118,12 +135,29 @@ export async function toggleContentItemPublished(
     select: { published: true },
   });
   if (!current) return;
-  await prisma.contentItem.update({
+  const updated = await prisma.contentItem.update({
     where: { id },
     data: { published: !current.published },
   });
-  revalidatePath("/admin/content");
-  revalidatePath("/student/methodology");
+
+  // Notify all students when content becomes published
+  if (updated.published) {
+    const students = await prisma.user.findMany({
+      where: { role: "STUDENT" },
+      select: { id: true },
+    });
+    const inputs: NotifyInput[] = students.map((s) => ({
+      userId: s.id,
+      type: "NEW_CONTENT" as const,
+      title: `Nouveau contenu : ${updated.title}`,
+      body: `Un nouveau contenu est disponible dans la section Méthodologie.`,
+      data: { href: "/dashboard/student/methodology" },
+    }));
+    await notifyMany(inputs);
+  }
+
+  revalidatePath("/dashboard/admin/content");
+  revalidatePath("/dashboard/student/methodology");
 }
 
 export async function deleteContentItem(formData: FormData): Promise<void> {
@@ -132,6 +166,6 @@ export async function deleteContentItem(formData: FormData): Promise<void> {
   if (!id) return;
   // ContentCompletion has onDelete: Cascade (students' "done" marks vanish).
   await prisma.contentItem.delete({ where: { id } });
-  revalidatePath("/admin/content");
-  revalidatePath("/student/methodology");
+  revalidatePath("/dashboard/admin/content");
+  revalidatePath("/dashboard/student/methodology");
 }

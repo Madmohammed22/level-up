@@ -48,7 +48,7 @@ export async function createTimeSlot(
   if (existing) return { error: "Créneau déjà existant" };
 
   await prisma.timeSlot.create({ data: parsed.data });
-  revalidatePath("/admin/timeslots");
+  revalidatePath("/dashboard/admin/timeslots");
   return { ok: true };
 }
 
@@ -85,6 +85,6 @@ export async function deleteTimeSlot(
 
   // Availabilities cascade-delete automatically (onDelete: Cascade in schema)
   await prisma.timeSlot.delete({ where: { id } });
-  revalidatePath("/admin/timeslots");
+  revalidatePath("/dashboard/admin/timeslots");
   return {};
 }

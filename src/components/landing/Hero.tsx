@@ -109,7 +109,7 @@ export function Hero() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Link
-            href="/login"
+            href="/auth/login"
             className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-5 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
           >
             Se connecter
@@ -155,7 +155,7 @@ export function Hero() {
             </svg>
           </Link>
           <Link
-            href="/login"
+            href="/auth/login"
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 px-8 py-3.5 font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

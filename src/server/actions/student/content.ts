@@ -27,7 +27,7 @@ export async function markContentDone(formData: FormData): Promise<void> {
     update: {},
     create: { studentId: profile.id, contentItemId },
   });
-  revalidatePath("/student/methodology");
+  revalidatePath("/dashboard/student/methodology");
 }
 
 export async function unmarkContentDone(formData: FormData): Promise<void> {
@@ -44,5 +44,5 @@ export async function unmarkContentDone(formData: FormData): Promise<void> {
   await prisma.contentCompletion.deleteMany({
     where: { studentId: profile.id, contentItemId },
   });
-  revalidatePath("/student/methodology");
+  revalidatePath("/dashboard/student/methodology");
 }

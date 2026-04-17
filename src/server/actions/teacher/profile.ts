@@ -43,6 +43,6 @@ export async function updateTeacherProfile(
     }),
   ]);
 
-  revalidatePath("/teacher/profile");
+  revalidatePath("/dashboard/teacher/profile");
   return { ok: true };
 }

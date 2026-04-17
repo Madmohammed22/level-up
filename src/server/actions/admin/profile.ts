@@ -29,6 +29,6 @@ export async function updateAdminProfile(
     data: { name: parsed.data.name },
   });
 
-  revalidatePath("/admin/profile");
+  revalidatePath("/dashboard/admin/profile");
   return { ok: true };
 }

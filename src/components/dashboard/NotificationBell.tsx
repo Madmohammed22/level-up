@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  fetchRecentNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  unreadNotificationCount,
   type NotificationRow,
 } from "@/server/actions/notifications";
 
@@ -23,9 +25,13 @@ function timeAgo(iso: string): string {
 
 function hrefFor(n: NotificationRow): string | null {
   const data = (n.data ?? {}) as Record<string, unknown>;
-  if (typeof data.href === "string") return data.href;
+  if (typeof data.href === "string") {
+    // Migrate old notification hrefs that lack /dashboard prefix
+    const raw = data.href as string;
+    return raw.startsWith("/dashboard") ? raw : `/dashboard${raw}`;
+  }
   if (n.type === "SESSION_ASSIGNED" || n.type === "SESSION_CANCELLED") {
-    return "/notifications";
+    return "/dashboard/notifications";
   }
   return null;
 }
@@ -41,6 +47,23 @@ export function NotificationBell({
   const [items, setItems] = useState(initial);
   const [unread, setUnread] = useState(initialUnread);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Poll for new notifications every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const [freshItems, freshCount] = await Promise.all([
+          fetchRecentNotifications(),
+          unreadNotificationCount(),
+        ]);
+        setItems(freshItems);
+        setUnread(freshCount);
+      } catch {
+        // Silently ignore polling errors (e.g. session expired)
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -158,7 +181,7 @@ export function NotificationBell({
           )}
           <div className="border-t border-zinc-200 dark:border-zinc-800">
             <Link
-              href="/notifications"
+              href="/dashboard/notifications"
               onClick={() => setOpen(false)}
               className="block px-4 py-2 text-xs text-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
             >

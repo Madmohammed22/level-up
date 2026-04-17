@@ -76,6 +76,7 @@ export function newMessageInput(params: {
   preview: string;
   conversationId: string;
   isAdminInbound: boolean; // true when an admin should click /admin/chat/[id]
+  recipientChatHref?: string; // override href for non-admin recipient
 }): NotifyInput {
   return {
     userId: params.recipientUserId,
@@ -85,8 +86,8 @@ export function newMessageInput(params: {
     data: {
       conversationId: params.conversationId,
       href: params.isAdminInbound
-        ? `/admin/chat/${params.conversationId}`
-        : `/student/chat`,
+        ? `/dashboard/admin/chat/${params.conversationId}`
+        : (params.recipientChatHref ?? `/dashboard/student/chat`),
     },
   };
 }

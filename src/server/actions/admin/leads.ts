@@ -22,7 +22,7 @@ export async function updateLeadStatus(formData: FormData): Promise<void> {
     data: { status: parsed.data },
   });
 
-  revalidatePath("/admin/leads");
+  revalidatePath("/dashboard/admin/leads");
 }
 
 export async function deleteLead(formData: FormData): Promise<void> {
@@ -30,5 +30,5 @@ export async function deleteLead(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
   if (!id) return;
   await prisma.leadSubmission.delete({ where: { id } });
-  revalidatePath("/admin/leads");
+  revalidatePath("/dashboard/admin/leads");
 }

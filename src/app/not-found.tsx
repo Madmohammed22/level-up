@@ -21,7 +21,7 @@ export default function NotFound() {
             Retour à l&apos;accueil
           </Link>
           <Link
-            href="/login"
+            href="/auth/login"
             className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
           >
             Se connecter

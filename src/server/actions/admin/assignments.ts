@@ -93,9 +93,9 @@ export async function previewAssignments(
 
   const warnings: string[] = [];
   if (ctx.input.students.length === 0)
-    warnings.push("Aucun élève — crée des élèves dans /admin/students.");
+    warnings.push("Aucun élève — crée des élèves dans /dashboard/admin/students.");
   if (ctx.input.teachers.length === 0)
-    warnings.push("Aucun professeur — crée des profs dans /admin/teachers.");
+    warnings.push("Aucun professeur — crée des profs dans /dashboard/admin/teachers.");
   if (ctx.input.rooms.length === 0) warnings.push("Aucune salle.");
   if (ctx.input.timeSlots.length === 0) warnings.push("Aucun créneau.");
 
@@ -296,8 +296,8 @@ export async function commitAssignments(
     payload: { weekStart: weekStart.toISOString(), created },
   });
 
-  revalidatePath("/admin/assignments");
-  revalidatePath("/admin/sessions");
+  revalidatePath("/dashboard/admin/assignments");
+  revalidatePath("/dashboard/admin/sessions");
   return { ok: true, created };
 }
 
@@ -346,7 +346,7 @@ export async function cancelSession(formData: FormData): Promise<void> {
     payload: { subjectName: session?.subject.name },
   });
 
-  revalidatePath("/admin/sessions");
-  revalidatePath("/student/schedule");
-  revalidatePath("/teacher/schedule");
+  revalidatePath("/dashboard/admin/sessions");
+  revalidatePath("/dashboard/student/schedule");
+  revalidatePath("/dashboard/teacher/schedule");
 }

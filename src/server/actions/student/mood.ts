@@ -40,6 +40,6 @@ export async function submitMoodCheckIn(
     },
   });
 
-  revalidatePath("/student/mood");
+  revalidatePath("/dashboard/student/mood");
   return { ok: true };
 }

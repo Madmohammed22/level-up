@@ -101,7 +101,7 @@ export async function createSessionTemplate(formData: FormData) {
     payload: { subjectId: parsed.data.subjectId, recurrence: parsed.data.recurrence },
   });
 
-  revalidatePath("/admin/templates");
+  revalidatePath("/dashboard/admin/templates");
 }
 
 // ---- delete template ----
@@ -128,7 +128,7 @@ export async function deleteSessionTemplate(formData: FormData) {
     entityId: id,
   });
 
-  revalidatePath("/admin/templates");
+  revalidatePath("/dashboard/admin/templates");
 }
 
 // ---- generate sessions from template ----
@@ -238,8 +238,8 @@ export async function generateSessionsFromTemplate(formData: FormData) {
     payload: { templateId: parsed.data.templateId, created: sessionsToCreate.length },
   });
 
-  revalidatePath("/admin/templates");
-  revalidatePath("/admin/sessions");
+  revalidatePath("/dashboard/admin/templates");
+  revalidatePath("/dashboard/admin/sessions");
 
   return { created: sessionsToCreate.length };
 }

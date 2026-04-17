@@ -66,7 +66,7 @@ export async function toggleLevelCompatibility(
     },
   });
 
-  revalidatePath("/admin/compatibility");
+  revalidatePath("/dashboard/admin/compatibility");
   return { ok: true };
 }
 
@@ -109,27 +109,32 @@ export async function saveBulkCompatibility(
     return { subjectId: e.subjectId, levelA: a, levelB: b, compatible: e.compatible };
   });
 
-  await prisma.$transaction(
-    normalized.map((e) =>
-      prisma.levelCompatibility.upsert({
-        where: {
-          subjectId_levelA_levelB: {
+  // Chunk into batches of 10 to avoid transaction timeout on Supabase
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < normalized.length; i += BATCH_SIZE) {
+    const chunk = normalized.slice(i, i + BATCH_SIZE);
+    await prisma.$transaction(
+      chunk.map((e) =>
+        prisma.levelCompatibility.upsert({
+          where: {
+            subjectId_levelA_levelB: {
+              subjectId: e.subjectId,
+              levelA: e.levelA,
+              levelB: e.levelB,
+            },
+          },
+          update: { compatible: e.compatible },
+          create: {
             subjectId: e.subjectId,
             levelA: e.levelA,
             levelB: e.levelB,
+            compatible: e.compatible,
           },
-        },
-        update: { compatible: e.compatible },
-        create: {
-          subjectId: e.subjectId,
-          levelA: e.levelA,
-          levelB: e.levelB,
-          compatible: e.compatible,
-        },
-      }),
-    ),
-  );
+        }),
+      ),
+    );
+  }
 
-  revalidatePath("/admin/compatibility");
+  revalidatePath("/dashboard/admin/compatibility");
   return { ok: true };
 }

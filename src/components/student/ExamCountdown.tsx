@@ -78,14 +78,14 @@ export function ExamCountdown({ exams }: { exams: ExamCountdownItem[] }) {
 
       {urgency === "imminent" || next.protocolActivated ? (
         <Link
-          href="/student/methodology?category=EXAM_PREP"
+          href="/dashboard/student/methodology?category=EXAM_PREP"
           className="mt-4 inline-block rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 text-xs font-medium"
         >
           Activer le protocole anti-stress
         </Link>
       ) : (
         <Link
-          href="/student/methodology?category=EXAM_PREP"
+          href="/dashboard/student/methodology?category=EXAM_PREP"
           className="mt-4 inline-block text-xs text-blue-600 hover:underline"
         >
           Préparer cet examen →

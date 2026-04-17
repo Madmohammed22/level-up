@@ -1,3 +1,5 @@
+"use client";
+
 import { signOut } from "@/server/actions/auth";
 
 export function SignOutButton() {

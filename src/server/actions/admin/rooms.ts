@@ -32,7 +32,7 @@ export async function createRoom(
   if (existing) return { error: "Salle déjà existante" };
 
   await prisma.room.create({ data: parsed.data });
-  revalidatePath("/admin/rooms");
+  revalidatePath("/dashboard/admin/rooms");
   return { ok: true };
 }
 
@@ -60,6 +60,6 @@ export async function deleteRoom(
   }
 
   await prisma.room.delete({ where: { id } });
-  revalidatePath("/admin/rooms");
+  revalidatePath("/dashboard/admin/rooms");
   return {};
 }

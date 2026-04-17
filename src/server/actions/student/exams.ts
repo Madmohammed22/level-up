@@ -63,9 +63,9 @@ export async function createStudentExam(
     },
   });
 
-  revalidatePath("/student/exams");
-  revalidatePath("/student");
-  revalidatePath("/admin/exams");
+  revalidatePath("/dashboard/student/exams");
+  revalidatePath("/dashboard/student");
+  revalidatePath("/dashboard/admin/exams");
   return { ok: true };
 }
 
@@ -85,7 +85,7 @@ export async function deleteStudentExam(formData: FormData): Promise<void> {
     where: { id, studentId: profile.id },
   });
 
-  revalidatePath("/student/exams");
-  revalidatePath("/student");
-  revalidatePath("/admin/exams");
+  revalidatePath("/dashboard/student/exams");
+  revalidatePath("/dashboard/student");
+  revalidatePath("/dashboard/admin/exams");
 }

@@ -28,11 +28,11 @@ export type AuthState = { error?: string };
 function roleHome(role: string): string {
   switch (role) {
     case "ADMIN":
-      return "/admin";
+      return "/dashboard/admin";
     case "TEACHER":
-      return "/teacher";
+      return "/dashboard/teacher";
     default:
-      return "/student";
+      return "/dashboard/student";
   }
 }
 
@@ -111,7 +111,7 @@ export async function signUp(
   });
 
   revalidatePath("/", "layout");
-  redirect("/student");
+  redirect("/dashboard/student");
 }
 
 export async function forgotPassword(
@@ -126,7 +126,7 @@ export async function forgotPassword(
   const supabase = await createSupabaseServerClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/api/auth/callback?next=/reset-password`,
+    redirectTo: `${siteUrl}/api/auth/callback?next=/auth/reset-password`,
   });
   if (error) {
     return { error: error.message };
@@ -157,5 +157,5 @@ export async function signOut() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect("/login");
+  redirect("/auth/login");
 }

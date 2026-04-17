@@ -45,8 +45,8 @@ export async function createExamDate(
     },
   });
 
-  revalidatePath("/admin/exams");
-  revalidatePath("/student");
+  revalidatePath("/dashboard/admin/exams");
+  revalidatePath("/dashboard/student");
   return { ok: true };
 }
 
@@ -55,8 +55,8 @@ export async function deleteExamDate(formData: FormData): Promise<void> {
   const id = formData.get("id") as string | null;
   if (!id) return;
   await prisma.examDate.delete({ where: { id } });
-  revalidatePath("/admin/exams");
-  revalidatePath("/student");
+  revalidatePath("/dashboard/admin/exams");
+  revalidatePath("/dashboard/student");
 }
 
 export async function toggleExamProtocol(formData: FormData): Promise<void> {
@@ -72,6 +72,6 @@ export async function toggleExamProtocol(formData: FormData): Promise<void> {
     where: { id },
     data: { protocolActivated: !current.protocolActivated },
   });
-  revalidatePath("/admin/exams");
-  revalidatePath("/student");
+  revalidatePath("/dashboard/admin/exams");
+  revalidatePath("/dashboard/student");
 }

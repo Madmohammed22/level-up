@@ -1,6 +1,7 @@
 // Server Supabase client. Used from Server Components, Route Handlers,
 // Server Actions. Reads/writes auth cookies.
 
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -27,5 +28,14 @@ export async function createSupabaseServerClient() {
         },
       },
     },
+  );
+}
+
+/** Admin client using service role key — bypasses RLS. Use for user management only. */
+export function createSupabaseAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }
