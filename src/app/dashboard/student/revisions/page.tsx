@@ -7,7 +7,7 @@ import { ProgressRing } from "@/components/student/srs/ProgressRing";
 import { TodaySessionRing } from "@/components/student/srs/TodaySessionRing";
 import { DueHistogram } from "@/components/student/srs/DueHistogram";
 import { AccuracyTrend } from "@/components/student/srs/AccuracyTrend";
-import { SrsDashboardClient } from "./SrsDashboardClient";
+import { SrsDashboardClient, DeleteSubjectButton } from "./SrsDashboardClient";
 
 export default async function SrsRevisionsPage() {
   const user = await requireRole("STUDENT");
@@ -41,9 +41,9 @@ export default async function SrsRevisionsPage() {
   const now = new Date();
   const accuracyBySubject = subjects.map((s) => {
     const days: { dayOffset: number; accuracy: number | null }[] = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 14; i++) {
       const dayStart = new Date(now);
-      dayStart.setDate(dayStart.getDate() - (29 - i));
+      dayStart.setDate(dayStart.getDate() - (13 - i));
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
@@ -91,6 +91,7 @@ export default async function SrsRevisionsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {hasSubjects && <SrsDashboardClient showCreateButton />}
           {hasSubjects && dueToday > 0 && (
             <SrsDashboardClient
               showReviewDropdown
@@ -166,14 +167,16 @@ export default async function SrsRevisionsPage() {
             </div>
 
             {/* Due Histogram */}
-            <div className="lg:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
+            <div className="lg:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 flex flex-col">
               <div className="mb-3">
                 <h2 className="text-sm font-semibold">Cartes à venir · par jour</h2>
                 <p className="text-xs text-zinc-500">
-                  Estimation sur les 14 prochains jours
+                  Prochains 14 jours · données réelles
                 </p>
               </div>
-              <DueHistogram subjects={histogramSubjects} days={14} />
+              <div className="flex-1 flex items-end">
+                <DueHistogram subjects={histogramSubjects} days={14} />
+              </div>
             </div>
           </div>
 
@@ -181,13 +184,12 @@ export default async function SrsRevisionsPage() {
           {reviewHistory.length > 0 && (
             <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
               <div className="mb-3">
-                <h2 className="text-sm font-semibold">Précision · 30 jours</h2>
+                <h2 className="text-sm font-semibold">Précision · 14 jours</h2>
                 <p className="text-xs text-zinc-500">Cible : 80% de bonnes réponses</p>
               </div>
-              <AccuracyTrend subjects={accuracyBySubject} days={30} />
+              <AccuracyTrend subjects={accuracyBySubject} days={14} />
             </div>
           )}
-
           {/* Subjects table */}
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -197,20 +199,6 @@ export default async function SrsRevisionsPage() {
                   {subjects.length} matières · {totalCards} cartes au total
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <SrsDashboardClient showCreateButton />
-                {dueToday > 0 && (
-                  <SrsDashboardClient
-                    showReviewDropdown
-                    subjects={subjects.map((s) => ({
-                      id: s.id,
-                      name: s.name,
-                      hue: s.hue,
-                      due: s.due,
-                    }))}
-                  />
-                )}
-              </div>
             </div>
 
             {/* Header row */}
@@ -219,19 +207,19 @@ export default async function SrsRevisionsPage() {
               <div>Progression</div>
               <div>Rétention</div>
               <div>Cartes</div>
-              <div className="text-right">À réviser</div>
+              <div className="text-center">À réviser</div>
             </div>
 
             {subjects.map((s) => (
               <Link
                 key={s.id}
                 href={`/dashboard/student/revisions/${s.id}`}
-                className="grid grid-cols-1 md:grid-cols-5 gap-3 items-center py-3 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 rounded-lg px-2 -mx-2 transition-colors"
+                className="group relative grid grid-cols-1 md:grid-cols-5 gap-3 items-center py-3 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 rounded-lg px-2 -mx-2 transition-colors"
               >
                 {/* Subject name */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-semibold font-mono"
+                    className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[11px] font-semibold font-mono"
                     style={{
                       background: `oklch(0.92 0.05 ${s.hue})`,
                       color: `oklch(0.3 0.15 ${s.hue})`,
@@ -239,10 +227,10 @@ export default async function SrsRevisionsPage() {
                   >
                     {s.code.slice(0, 3)}
                   </div>
-                  <div>
-                    <div className="font-semibold text-sm">{s.name}</div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm truncate">{s.name}</div>
                     {s.description && (
-                      <div className="text-xs text-zinc-500 truncate max-w-[200px]">
+                      <div className="text-xs text-zinc-500 truncate">
                         {s.description}
                       </div>
                     )}
@@ -272,6 +260,9 @@ export default async function SrsRevisionsPage() {
                     strokeWidth={3}
                     color={`oklch(0.6 0.14 ${s.hue})`}
                   />
+                  <span className="text-sm font-semibold tabular-nums">
+                    {Math.round(s.retention * 100)}%
+                  </span>
                 </div>
 
                 {/* Card counts */}
@@ -280,9 +271,14 @@ export default async function SrsRevisionsPage() {
                 </div>
 
                 {/* Due */}
-                <div className="text-right">
+                <div className="text-center pr-6">
                   <span className="text-lg font-bold tabular-nums">{s.due}</span>
                   <div className="text-xs text-zinc-500">à réviser</div>
+                </div>
+
+                {/* 3-dot menu — absolute top-right */}
+                <div className="absolute top-2 right-2">
+                  <DeleteSubjectButton subjectId={s.id} />
                 </div>
               </Link>
             ))}

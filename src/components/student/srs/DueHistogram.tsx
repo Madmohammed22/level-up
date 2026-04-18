@@ -27,11 +27,11 @@ export function DueHistogram({
   const [hover, setHover] = useState<number | null>(null);
 
   const W = 780;
-  const H = 220;
+  const H = 260;
   const padL = 36;
   const padR = 12;
-  const padT = 20;
-  const padB = 28;
+  const padT = 24;
+  const padB = 32;
   const iw = W - padL - padR;
   const ih = H - padT - padB;
 
@@ -53,7 +53,7 @@ export function DueHistogram({
   const grid = [0, 0.25, 0.5, 0.75, 1].map((f) => niceMax * f);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" className="block">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="block w-full h-auto" style={{ minHeight: 200 }}>
       {grid.map((g, i) => (
         <g key={i}>
           <line

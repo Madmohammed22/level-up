@@ -49,9 +49,9 @@ export default async function SrsSubjectDetailPage({
   const accuracyData = (() => {
     const days: { dayOffset: number; accuracy: number | null }[] = [];
     const nowDate = new Date();
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 14; i++) {
       const dayStart = new Date(nowDate);
-      dayStart.setDate(dayStart.getDate() - (29 - i));
+      dayStart.setDate(dayStart.getDate() - (13 - i));
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
@@ -157,23 +157,23 @@ export default async function SrsSubjectDetailPage({
           <p className="text-xs text-zinc-500 mb-4">
             Répartition des cartes par intervalle actuel
           </p>
-          <div className="flex items-end gap-3 h-32">
+          <div className="flex items-end gap-3" style={{ height: 160 }}>
             {buckets.map((b, i) => {
               const max = Math.max(1, ...bucketCounts);
-              const h = (bucketCounts[i] / max) * 100;
+              const barHeight = Math.max(6, (bucketCounts[i] / max) * 120);
               return (
-                <div key={b.label} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs font-semibold tabular-nums">
+                <div key={b.label} className="flex-1 flex flex-col items-center justify-end" style={{ height: "100%" }}>
+                  <span className="text-xs font-semibold tabular-nums mb-1">
                     {bucketCounts[i]}
                   </span>
                   <div
-                    className="w-full rounded-t-md transition-all"
+                    className="w-full max-w-[48px] rounded-t-md"
                     style={{
-                      height: `${Math.max(4, h)}%`,
+                      height: barHeight,
                       background: `oklch(0.75 0.12 ${subject.hue})`,
                     }}
                   />
-                  <span className="text-[10px] text-zinc-400 font-mono">
+                  <span className="text-[10px] text-zinc-400 font-mono mt-2">
                     {b.label}
                   </span>
                 </div>
@@ -214,14 +214,14 @@ export default async function SrsSubjectDetailPage({
       {reviewHistory.length > 0 && (
         <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
           <div className="mb-3">
-            <h2 className="text-sm font-semibold">Précision · 30 jours</h2>
+            <h2 className="text-sm font-semibold">Précision · 14 jours</h2>
             <p className="text-xs text-zinc-500">
               Évolution des bonnes réponses sur {subject.name}
             </p>
           </div>
           <AccuracyTrend
             subjects={accuracyData}
-            days={30}
+            days={14}
             focusedSubjectId={subject.id}
           />
         </div>

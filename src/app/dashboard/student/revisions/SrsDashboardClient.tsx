@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { CreateSubjectForm } from "@/components/student/srs/CreateSubjectForm";
+import { deleteSrsSubject } from "@/server/actions/student/srs";
 
 type SubjectInfo = { id: string; name: string; hue: number; due: number };
 
@@ -34,8 +35,19 @@ export function SrsDashboardClient({
   if (showCreateSubject) {
     return (
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 text-center max-w-lg mx-auto">
-        <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-full text-2xl">
-          📚
+        <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-full">
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" className="text-zinc-500 dark:text-zinc-400">
+            {/* Back card */}
+            <rect x="6" y="3" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
+            {/* Front card */}
+            <rect x="3" y="7" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.5" />
+            {/* Lines on front card */}
+            <line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="7" y1="16" x2="13" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            {/* Small clock */}
+            <circle cx="22.5" cy="22.5" r="5" stroke="currentColor" strokeWidth="1.5" />
+            <polyline points="22.5,20 22.5,22.5 24.5,24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
         <h2 className="text-lg font-semibold tracking-tight mb-1">
           Commence tes révisions espacées
@@ -157,4 +169,83 @@ export function SrsDashboardClient({
   }
 
   return null;
+}
+
+export function DeleteSubjectButton({ subjectId }: { subjectId: string }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+        setConfirmDelete(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleToggle(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuOpen(!menuOpen);
+    setConfirmDelete(false);
+  }
+
+  function handleDeleteClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("id", subjectId);
+      await deleteSrsSubject(fd);
+      window.location.reload();
+    });
+  }
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={handleToggle}
+        className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="8" cy="3" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="8" cy="13" r="1.5" />
+        </svg>
+      </button>
+
+      {menuOpen && (
+        <div
+          className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-lg z-20 py-1"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          {!confirmDelete ? (
+            <button
+              onClick={handleDeleteClick}
+              className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              Supprimer
+            </button>
+          ) : (
+            <button
+              onClick={handleDeleteClick}
+              disabled={isPending}
+              className="w-full text-left px-3 py-1.5 text-sm text-red-600 font-semibold hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50"
+            >
+              {isPending ? "…" : "Confirmer"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

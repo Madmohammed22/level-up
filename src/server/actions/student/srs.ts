@@ -188,6 +188,53 @@ export async function deleteSrsCard(formData: FormData): Promise<void> {
   revalidatePath(`/dashboard/student/revisions/${card.subject.id}`);
 }
 
+const UpdateCardSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1, "Texte requis").max(2000),
+  tag: z.string().max(50).optional(),
+});
+
+export async function updateSrsCard(
+  _prev: SrsCardState | undefined,
+  formData: FormData,
+): Promise<SrsCardState> {
+  const { profile } = await getStudentProfile();
+
+  const parsed = UpdateCardSchema.safeParse({
+    id: formData.get("id"),
+    text: formData.get("text"),
+    tag: formData.get("tag") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Entrée invalide" };
+  }
+
+  // Verify ownership
+  const card = await prisma.srsCard.findUnique({
+    where: { id: parsed.data.id },
+    include: { subject: { select: { studentId: true, id: true } } },
+  });
+  if (!card || card.subject.studentId !== profile.id) {
+    return { error: "Carte introuvable." };
+  }
+
+  if (!parsed.data.text.includes("{{") || !parsed.data.text.includes("}}")) {
+    return { error: "Le texte doit contenir au moins un trou {{réponse}}." };
+  }
+
+  await prisma.srsCard.update({
+    where: { id: parsed.data.id },
+    data: {
+      text: parsed.data.text,
+      tag: parsed.data.tag ?? null,
+    },
+  });
+
+  revalidateSrs();
+  revalidatePath(`/dashboard/student/revisions/${card.subject.id}`);
+  return { ok: true };
+}
+
 // ---------------------------------------------------------------------------
 // Review submission
 // ---------------------------------------------------------------------------
