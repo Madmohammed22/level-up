@@ -134,7 +134,7 @@ export async function loadAdminDashboardData(): Promise<AdminDashboardData> {
   );
 
   // ---- level × subject matrix ----
-  const LEVELS = ["GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
+  const LEVELS = ["GRADE_7", "GRADE_8", "GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
   const matrixRecords = enrollments.map((e) => ({
     subjectId: e.session.subjectId,
     level: e.student.level,

@@ -11,6 +11,8 @@ const initial: ActionState = {};
 type Subject = { id: string; name: string };
 
 const LEVELS = [
+  ["GRADE_7", "1ère année collège"],
+  ["GRADE_8", "2ème année collège"],
   ["GRADE_9", "3ème"],
   ["GRADE_10", "2nde"],
   ["GRADE_11", "1ère"],

@@ -2,6 +2,8 @@ import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 
 const LEVEL_LABELS: Record<string, string> = {
+  GRADE_7: "1AC",
+  GRADE_8: "2AC",
   GRADE_9: "3ème",
   GRADE_10: "2nde",
   GRADE_11: "1ère",

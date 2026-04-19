@@ -75,7 +75,7 @@ export async function createSessionTemplate(formData: FormData) {
     .split(",")
     .map((l) => l.trim())
     .filter(Boolean) as Array<
-    "GRADE_9" | "GRADE_10" | "GRADE_11" | "GRADE_12"
+    "GRADE_7" | "GRADE_8" | "GRADE_9" | "GRADE_10" | "GRADE_11" | "GRADE_12"
   >;
 
   await prisma.sessionTemplate.create({

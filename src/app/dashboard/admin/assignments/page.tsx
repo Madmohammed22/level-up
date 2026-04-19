@@ -6,6 +6,7 @@ import {
   type PreviewResult,
 } from "@/server/actions/admin/assignments";
 import { mondayOf } from "@/server/domain/scheduling/weekDates";
+import { levelsLabel, levelLabel } from "@/lib/levelLabels";
 import { CommitAssignmentsButton } from "./CommitAssignmentsButton";
 
 function isoDate(d: Date): string {
@@ -99,7 +100,7 @@ function PreviewPanel({
           p.subjectName,
           p.teacherName,
           p.roomName,
-          p.levels.join(" "),
+          levelsLabel(p.levels, " "),
           p.studentNames.join(" "),
           p.timeSlotLabel,
         ]
@@ -243,7 +244,7 @@ function PreviewPanel({
                     <Td>{p.subjectName}</Td>
                     <Td>{p.teacherName}</Td>
                     <Td>{p.roomName}</Td>
-                    <Td>{p.levels.join(" + ")}</Td>
+                    <Td>{levelsLabel(p.levels)}</Td>
                     <Td>
                       <span className="font-medium">
                         {p.studentIds.length}/10
@@ -280,7 +281,7 @@ function PreviewPanel({
               <li key={u.studentId} className="px-4 py-3">
                 <div className="font-medium">{u.studentName}</div>
                 <div className="text-xs text-zinc-500">
-                  {u.level} — manque :{" "}
+                  {levelLabel(u.level)} — manque :{" "}
                   {u.missingSubjectNames.join(", ")}
                 </div>
               </li>

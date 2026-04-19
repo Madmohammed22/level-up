@@ -107,15 +107,23 @@ export function CreateTemplateForm({
           required
           className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm"
         >
-          <option value="GRADE_9">3ème</option>
-          <option value="GRADE_10">2nde</option>
-          <option value="GRADE_11">1ère</option>
-          <option value="GRADE_12">Terminale</option>
-          <option value="GRADE_9,GRADE_10">3ème + 2nde</option>
-          <option value="GRADE_11,GRADE_12">1ère + Terminale</option>
-          <option value="GRADE_9,GRADE_10,GRADE_11,GRADE_12">
-            Tous niveaux
-          </option>
+          <optgroup label="Collège">
+            <option value="GRADE_7">1ère année collège</option>
+            <option value="GRADE_8">2ème année collège</option>
+            <option value="GRADE_9">3ème</option>
+          </optgroup>
+          <optgroup label="Lycée">
+            <option value="GRADE_10">2nde</option>
+            <option value="GRADE_11">1ère</option>
+            <option value="GRADE_12">Terminale</option>
+          </optgroup>
+          <optgroup label="Combinés">
+            <option value="GRADE_7,GRADE_8,GRADE_9">Tout collège</option>
+            <option value="GRADE_10,GRADE_11,GRADE_12">Tout lycée</option>
+            <option value="GRADE_7,GRADE_8,GRADE_9,GRADE_10,GRADE_11,GRADE_12">
+              Tous niveaux
+            </option>
+          </optgroup>
         </select>
       </div>
 

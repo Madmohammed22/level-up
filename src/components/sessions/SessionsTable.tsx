@@ -2,6 +2,7 @@
 // Shows time, subject, teacher, room, levels, enrollment count, status.
 
 import { mondayOf } from "@/server/domain/scheduling/weekDates";
+import { levelsLabel } from "@/lib/levelLabels";
 
 const DAY_LABELS: Record<number, string> = {
   0: "Dim",
@@ -102,7 +103,7 @@ export function SessionsTable({
               <Td className="font-medium">{s.subjectName}</Td>
               <Td>{s.teacherName}</Td>
               <Td>{s.roomName}</Td>
-              <Td>{s.levels.join(" + ")}</Td>
+              <Td>{levelsLabel(s.levels)}</Td>
               {showEnrollment ? (
                 <Td>
                   {s.enrolledCount}/{s.maxCapacity}

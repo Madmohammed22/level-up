@@ -1,10 +1,7 @@
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
-import {
-  SessionsTable,
-  groupByWeek,
-  type SessionRow,
-} from "@/components/sessions/SessionsTable";
+import type { SessionRow } from "@/components/sessions/SessionsTable";
+import { ScheduleSearch } from "./ScheduleSearch";
 
 export default async function StudentSchedulePage() {
   const user = await requireRole("STUDENT");
@@ -59,7 +56,12 @@ export default async function StudentSchedulePage() {
     status: e.session.status,
   }));
 
-  const byWeek = groupByWeek(rows);
+  // Serialize dates for client component
+  const serialized = rows.map((r) => ({
+    ...r,
+    startAt: r.startAt.toISOString(),
+    endAt: r.endAt.toISOString(),
+  }));
 
   return (
     <section>
@@ -70,20 +72,7 @@ export default async function StudentSchedulePage() {
         </p>
       </header>
 
-      {byWeek.length === 0 ? (
-        <p className="text-sm text-zinc-500">
-          Aucune séance assignée pour le moment.
-        </p>
-      ) : (
-        <div className="space-y-8">
-          {byWeek.map((g) => (
-            <div key={g.key}>
-              <h2 className="text-sm font-medium mb-3">{g.label}</h2>
-              <SessionsTable sessions={g.items} showEnrollment={false} />
-            </div>
-          ))}
-        </div>
-      )}
+      <ScheduleSearch rows={serialized} />
     </section>
   );
 }

@@ -3,6 +3,8 @@
 import type { MatrixCell } from "@/server/domain/analytics/levelSubjectMatrix";
 
 const LEVEL_LABEL: Record<string, string> = {
+  GRADE_7: "1AC",
+  GRADE_8: "2AC",
   GRADE_9: "3e",
   GRADE_10: "2nde",
   GRADE_11: "1ère",

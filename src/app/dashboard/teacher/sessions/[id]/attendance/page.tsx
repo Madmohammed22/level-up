@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { AttendanceForm } from "./AttendanceForm";
+import { levelLabel } from "@/lib/levelLabels";
 
 const DATE_FMT = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
@@ -78,7 +79,7 @@ export default async function TeacherSessionAttendancePage({
             id: e.id,
             attendance: e.attendance,
             studentName: e.student.user.name ?? "",
-            studentLevel: e.student.level,
+            studentLevel: levelLabel(e.student.level),
           }))}
         />
       )}

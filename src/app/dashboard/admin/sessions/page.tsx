@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { cancelSession } from "@/server/actions/admin/assignments";
 import { mondayOf } from "@/server/domain/scheduling/weekDates";
+import { levelsLabel, levelLabel } from "@/lib/levelLabels";
 
 const DAY_LABELS: Record<number, string> = {
   0: "Dim",
@@ -67,7 +68,7 @@ export default async function AdminSessionsPage({
         s.subject.name,
         s.teacher.user.name ?? "",
         s.room.name,
-        s.levels.join(" "),
+        levelsLabel(s.levels, " "),
       ]
         .join(" ")
         .toLowerCase();
@@ -212,7 +213,7 @@ export default async function AdminSessionsPage({
                         <Td>{s.subject.name}</Td>
                         <Td>{s.teacher.user.name}</Td>
                         <Td>{s.room.name}</Td>
-                        <Td>{s.levels.join(" + ")}</Td>
+                        <Td>{levelsLabel(s.levels)}</Td>
                         <Td>
                           {s._count.enrollments}/{s.maxCapacity}
                         </Td>

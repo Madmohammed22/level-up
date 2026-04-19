@@ -6,7 +6,7 @@ import {
   type CompatibilityState,
 } from "@/server/actions/admin/compatibility";
 
-type Level = "GRADE_9" | "GRADE_10" | "GRADE_11" | "GRADE_12";
+type Level = "GRADE_7" | "GRADE_8" | "GRADE_9" | "GRADE_10" | "GRADE_11" | "GRADE_12";
 
 type SubjectData = {
   id: string;
@@ -25,9 +25,11 @@ type Props = {
   existing: CompatRow[];
 };
 
-const LEVELS: Level[] = ["GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
+const LEVELS: Level[] = ["GRADE_7", "GRADE_8", "GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
 
 const LEVEL_LABELS: Record<Level, string> = {
+  GRADE_7: "1AC",
+  GRADE_8: "2AC",
   GRADE_9: "3ème",
   GRADE_10: "2nde",
   GRADE_11: "1ère",
@@ -58,6 +60,13 @@ export function CompatibilityMatrix({ subjects, existing }: Props) {
     saveBulkCompatibility,
     initial,
   );
+  const [search, setSearch] = useState("");
+
+  const filteredSubjects = search.trim()
+    ? subjects.filter((s) =>
+        s.name.toLowerCase().includes(search.trim().toLowerCase()),
+      )
+    : subjects;
 
   // Build initial state from existing rows
   const [compat, setCompat] = useState<Record<string, boolean>>(() => {
@@ -95,6 +104,25 @@ export function CompatibilityMatrix({ subjects, existing }: Props) {
     <form action={action} className="space-y-6">
       <input type="hidden" name="entries" value={JSON.stringify(entries)} />
 
+      {/* Search */}
+      <div className="relative">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher une matière…"
+          className="w-full md:w-72 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 pl-9 pr-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600"
+        />
+      </div>
+
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs">
         <span className="flex items-center gap-1.5">
@@ -112,9 +140,13 @@ export function CompatibilityMatrix({ subjects, existing }: Props) {
         <p className="text-sm text-zinc-500">
           Aucune matière. Créez des matières d&apos;abord.
         </p>
+      ) : filteredSubjects.length === 0 ? (
+        <p className="text-sm text-zinc-500">
+          Aucune matière trouvée pour « {search} »
+        </p>
       ) : (
         <div className="space-y-6">
-          {subjects.map((subject) => (
+          {filteredSubjects.map((subject) => (
             <div
               key={subject.id}
               className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"

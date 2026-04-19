@@ -11,6 +11,8 @@ type Props = {
 };
 
 const LEVELS = [
+  { value: "GRADE_7", label: "1ère année collège" },
+  { value: "GRADE_8", label: "2ème année collège" },
   { value: "GRADE_9", label: "3ème" },
   { value: "GRADE_10", label: "2nde" },
   { value: "GRADE_11", label: "1ère" },

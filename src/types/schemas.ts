@@ -2,6 +2,8 @@
 import { z } from "zod";
 
 export const LevelSchema = z.enum([
+  "GRADE_7",
+  "GRADE_8",
   "GRADE_9",
   "GRADE_10",
   "GRADE_11",

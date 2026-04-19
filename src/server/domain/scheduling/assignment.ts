@@ -13,6 +13,7 @@
 
 import type { Level } from "@/generated/prisma/enums";
 import { isLevelGroupCompatible, type CompatibilityRow } from "./compatibility";
+import { levelLabel, levelsLabel } from "@/lib/levelLabels";
 
 // ---- Input types ----
 
@@ -257,8 +258,8 @@ export function proposeAssignments(input: AssignmentInput): AssignmentOutput {
 
         const rationale =
           groupLevels.length > 1
-            ? `Mutualisation ${groupLevels.join("+")} (${groupStudents.length}/${maxCap})`
-            : `Classe standard ${level} (${groupStudents.length}/${maxCap})`;
+            ? `Mutualisation ${levelsLabel(groupLevels, "+")} (${groupStudents.length}/${maxCap})`
+            : `Classe standard ${levelLabel(level)} (${groupStudents.length}/${maxCap})`;
 
         proposed.push({
           subjectId,

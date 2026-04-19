@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 
-const LevelEnum = z.enum(["GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"]);
+const LevelEnum = z.enum(["GRADE_7", "GRADE_8", "GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"]);
 
 const ToggleSchema = z.object({
   subjectId: z.string().min(1),
