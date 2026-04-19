@@ -4,15 +4,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deleteStudent } from "@/server/actions/admin/students";
 import { CreateStudentForm } from "./CreateStudentForm";
 import { EditStudentForm } from "./EditStudentForm";
-
-const LEVEL_LABELS: Record<string, string> = {
-  GRADE_7: "1AC",
-  GRADE_8: "2AC",
-  GRADE_9: "3ème",
-  GRADE_10: "2nde",
-  GRADE_11: "1ère",
-  GRADE_12: "Terminale",
-};
+import { levelLabel } from "@/lib/levelLabels";
 
 export default async function AdminStudentsPage({
   searchParams,
@@ -122,7 +114,7 @@ export default async function AdminStudentsPage({
                       <div className="font-medium truncate">{u.name}</div>
                       <div className="text-xs text-zinc-500 truncate">
                         {u.email} ·{" "}
-                        {p ? LEVEL_LABELS[p.level] ?? p.level : "—"}
+                        {p ? levelLabel(p.level) : "—"}
                       </div>
                       <div className="text-xs text-zinc-500 mt-1">
                         {p?.subjects.map((s) => s.name).join(" · ") ||

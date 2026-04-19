@@ -1,14 +1,6 @@
 import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
-
-const LEVEL_LABELS: Record<string, string> = {
-  GRADE_7: "1AC",
-  GRADE_8: "2AC",
-  GRADE_9: "3ème",
-  GRADE_10: "2nde",
-  GRADE_11: "1ère",
-  GRADE_12: "Terminale",
-};
+import { levelLabel } from "@/lib/levelLabels";
 
 export default async function TeacherStudentsPage({
   searchParams,
@@ -152,7 +144,7 @@ export default async function TeacherStudentsPage({
                   <div>
                     <div className="font-medium">{s.name}</div>
                     <div className="text-xs text-zinc-500">
-                      {s.email} · {LEVEL_LABELS[s.level] ?? s.level} ·{" "}
+                      {s.email} · {levelLabel(s.level)} ·{" "}
                       {s.sessionCount} séance(s)
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">

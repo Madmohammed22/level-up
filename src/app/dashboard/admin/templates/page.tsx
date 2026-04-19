@@ -2,6 +2,7 @@ import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deleteSessionTemplate } from "@/server/actions/admin/templates";
+import { levelsLabel } from "@/lib/levelLabels";
 import { CreateTemplateForm } from "./CreateTemplateForm";
 import { GenerateButton } from "./GenerateButton";
 
@@ -13,15 +14,6 @@ const DAY_LABELS: Record<string, string> = {
   FRIDAY: "Ven",
   SATURDAY: "Sam",
   SUNDAY: "Dim",
-};
-
-const LEVEL_LABELS: Record<string, string> = {
-  GRADE_7: "1AC",
-  GRADE_8: "2AC",
-  GRADE_9: "3ème",
-  GRADE_10: "2nde",
-  GRADE_11: "1ère",
-  GRADE_12: "Term",
 };
 
 const RECURRENCE_LABELS: Record<string, string> = {
@@ -119,9 +111,7 @@ export default async function AdminTemplatesPage() {
                           {t.room.name} · Max {t.maxCapacity}
                         </div>
                         <div className="text-xs text-zinc-500">
-                          {t.levels
-                            .map((l) => LEVEL_LABELS[l] ?? l)
-                            .join(" + ")}{" "}
+                          {levelsLabel(t.levels)}{" "}
                           ·{" "}
                           <span className="font-medium">
                             {RECURRENCE_LABELS[t.recurrence]}

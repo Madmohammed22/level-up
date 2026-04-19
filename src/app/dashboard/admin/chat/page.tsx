@@ -3,15 +3,7 @@ import { requireRole } from "@/server/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { NewConversationForm } from "./NewConversationForm";
-
-const LEVEL_LABELS: Record<string, string> = {
-  GRADE_7: "1AC",
-  GRADE_8: "2AC",
-  GRADE_9: "3ème",
-  GRADE_10: "2nde",
-  GRADE_11: "1ère",
-  GRADE_12: "Terminale",
-};
+import { levelLabel } from "@/lib/levelLabels";
 
 function fmt(d: Date): string {
   return `${String(d.getDate()).padStart(2, "0")}/${String(
@@ -72,7 +64,7 @@ export default async function AdminChatInboxPage({
   const studentOptions = students.map((s) => ({
     userId: s.user.id,
     name: s.user.name,
-    level: LEVEL_LABELS[s.level] ?? s.level,
+    level: levelLabel(s.level),
     hasConversation: convoStudentUserIds.has(s.user.id),
   }));
 

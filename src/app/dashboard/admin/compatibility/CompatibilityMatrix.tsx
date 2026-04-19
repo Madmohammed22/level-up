@@ -5,6 +5,7 @@ import {
   saveBulkCompatibility,
   type CompatibilityState,
 } from "@/server/actions/admin/compatibility";
+import { levelLabel } from "@/lib/levelLabels";
 
 type Level = "GRADE_7" | "GRADE_8" | "GRADE_9" | "GRADE_10" | "GRADE_11" | "GRADE_12";
 
@@ -27,14 +28,6 @@ type Props = {
 
 const LEVELS: Level[] = ["GRADE_7", "GRADE_8", "GRADE_9", "GRADE_10", "GRADE_11", "GRADE_12"];
 
-const LEVEL_LABELS: Record<Level, string> = {
-  GRADE_7: "1AC",
-  GRADE_8: "2AC",
-  GRADE_9: "3ème",
-  GRADE_10: "2nde",
-  GRADE_11: "1ère",
-  GRADE_12: "Term",
-};
 
 /** Generate all unique pairs (i < j) */
 function levelPairs(): [Level, Level][] {
@@ -174,7 +167,7 @@ export function CompatibilityMatrix({ subjects, existing }: Props) {
                           className="border-t border-zinc-200 dark:border-zinc-800"
                         >
                           <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                            {LEVEL_LABELS[a]} + {LEVEL_LABELS[b]}
+                            {levelLabel(a)} + {levelLabel(b)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             <button

@@ -207,6 +207,7 @@ export async function commitAssignments(
     where: {
       roomId: { in: toCreate.map((c) => c.p.roomId) },
       startAt: { in: toCreate.map((c) => c.startAt) },
+      status: { not: "CANCELLED" },
     },
     select: { roomId: true, startAt: true },
   });
@@ -219,6 +220,24 @@ export async function commitAssignments(
   );
   if (creatable.length === 0) {
     return { error: "Toutes les séances existent déjà pour cette semaine." };
+  }
+
+  // Remove cancelled sessions that occupy the same (roomId, startAt) slot
+  // so the unique constraint won't block re-creation.
+  const creatableKeys = creatable.map((c) => ({
+    roomId: c.p.roomId,
+    startAt: c.startAt,
+  }));
+  if (creatableKeys.length > 0) {
+    await prisma.session.deleteMany({
+      where: {
+        OR: creatableKeys.map((k) => ({
+          roomId: k.roomId,
+          startAt: k.startAt,
+          status: "CANCELLED",
+        })),
+      },
+    });
   }
 
   let created = 0;
