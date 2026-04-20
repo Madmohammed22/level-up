@@ -95,7 +95,6 @@ prisma/
 ├── seed.ts
 └── migrations/
 docs/
-└── LEVEL_UP_PLAN.md        # Full implementation plan
 ```
 
 ## The assignment algorithm (in short)
@@ -120,4 +119,4 @@ Initial scaffold. Working: landing page, Prisma schema, assignment algorithm
 + tests. Next up: Supabase Auth integration, admin CRUD for students/teachers/
 rooms/time slots, calendar view, draft-approve UI for the algorithm.
 
-See `docs/LEVEL_UP_PLAN.md` for the complete feature-by-feature guide.
+<!-- See `docs/LEVEL_UP_PLAN.md` for the complete feature-by-feature guide. -->
