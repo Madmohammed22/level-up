@@ -8,12 +8,26 @@ import {
 
 const initial: CommitState = {};
 
-export function CommitAssignmentsButton({ weekISO }: { weekISO: string }) {
+export function CommitAssignmentsButton({
+  weekISO,
+  minGroupSize,
+  maxCapacity,
+}: {
+  weekISO: string;
+  minGroupSize?: number;
+  maxCapacity?: number;
+}) {
   const [state, action, pending] = useActionState(commitAssignments, initial);
 
   return (
     <form action={action} className="flex items-center gap-3">
       <input type="hidden" name="weekStart" value={weekISO} />
+      {minGroupSize != null && (
+        <input type="hidden" name="minGroupSize" value={minGroupSize} />
+      )}
+      {maxCapacity != null && (
+        <input type="hidden" name="maxCapacity" value={maxCapacity} />
+      )}
       {state.ok ? (
         <span className="text-sm text-green-700 dark:text-green-400">
           {state.created} séance(s) créée(s).

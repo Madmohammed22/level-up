@@ -26,7 +26,12 @@ function formatTime(iso: string): string {
 export default async function AdminAssignmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; q?: string }>;
+  searchParams: Promise<{
+    week?: string;
+    q?: string;
+    minGroupSize?: string;
+    maxCapacity?: string;
+  }>;
 }) {
   await requireRole("ADMIN");
   const params = await searchParams;
@@ -34,13 +39,21 @@ export default async function AdminAssignmentsPage({
   const defaultWeek = isoDate(mondayOf(new Date()));
   const weekISO = params.week ?? defaultWeek;
   const search = (params.q ?? "").trim();
+  const minGroupSize = params.minGroupSize ? Number(params.minGroupSize) : undefined;
+  const maxCapacity = params.maxCapacity ? Number(params.maxCapacity) : undefined;
 
   let preview: PreviewResult | null = null;
   let fatalError: string | null = null;
-  try {
-    preview = await previewAssignments(weekISO);
-  } catch (e) {
-    fatalError = (e as Error).message;
+  const effectiveMin = minGroupSize ?? 4;
+  const effectiveCap = maxCapacity ?? 10;
+  if (effectiveMin > effectiveCap) {
+    fatalError = "Min. groupe ne peut pas dépasser Max. élèves.";
+  } else {
+    try {
+      preview = await previewAssignments(weekISO, { minGroupSize, maxCapacity });
+    } catch (e) {
+      fatalError = (e as Error).message;
+    }
   }
 
   return (
@@ -62,6 +75,32 @@ export default async function AdminAssignmentsPage({
             className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Min. groupe
+          </label>
+          <input
+            type="number"
+            name="minGroupSize"
+            min={1}
+            max={15}
+            defaultValue={minGroupSize ?? 4}
+            className="w-20 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Max. élèves
+          </label>
+          <input
+            type="number"
+            name="maxCapacity"
+            min={2}
+            max={30}
+            defaultValue={maxCapacity ?? 10}
+            className="w-20 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
+          />
+        </div>
         {/* Hidden q to preserve search when changing week */}
         {search ? <input type="hidden" name="q" value={search} /> : null}
         <button
@@ -75,7 +114,13 @@ export default async function AdminAssignmentsPage({
       {fatalError ? (
         <p className="text-sm text-red-600">{fatalError}</p>
       ) : preview ? (
-        <PreviewPanel preview={preview} weekISO={weekISO} search={search} />
+        <PreviewPanel
+          preview={preview}
+          weekISO={weekISO}
+          search={search}
+          minGroupSize={minGroupSize}
+          maxCapacity={maxCapacity}
+        />
       ) : null}
     </section>
   );
@@ -85,11 +130,16 @@ function PreviewPanel({
   preview,
   weekISO,
   search,
+  minGroupSize,
+  maxCapacity,
 }: {
   preview: PreviewResult;
   weekISO: string;
   search: string;
+  minGroupSize?: number;
+  maxCapacity?: number;
 }) {
+  const effectiveMax = maxCapacity ?? 10;
   const pct = Math.round(preview.score.fillRate * 100);
   const q = search.toLowerCase();
   const baseUrl = `/dashboard/admin/assignments?week=${weekISO}`;
@@ -160,6 +210,12 @@ function PreviewPanel({
           <div className="flex items-center gap-2">
             <form method="get" className="flex items-center gap-2">
               <input type="hidden" name="week" value={weekISO} />
+              {minGroupSize != null && (
+                <input type="hidden" name="minGroupSize" value={minGroupSize} />
+              )}
+              {maxCapacity != null && (
+                <input type="hidden" name="maxCapacity" value={maxCapacity} />
+              )}
               <div className="relative">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400"
@@ -201,7 +257,11 @@ function PreviewPanel({
               ) : null}
             </form>
             {preview.proposedSessions.length > 0 ? (
-              <CommitAssignmentsButton weekISO={weekISO} />
+              <CommitAssignmentsButton
+                weekISO={weekISO}
+                minGroupSize={minGroupSize}
+                maxCapacity={maxCapacity}
+              />
             ) : null}
           </div>
         </div>
@@ -247,7 +307,7 @@ function PreviewPanel({
                     <Td>{levelsLabel(p.levels)}</Td>
                     <Td>
                       <span className="font-medium">
-                        {p.studentIds.length}/10
+                        {p.studentIds.length}/{effectiveMax}
                       </span>
                       <div className="text-xs text-zinc-500 truncate max-w-[200px]">
                         {p.studentNames.join(", ")}

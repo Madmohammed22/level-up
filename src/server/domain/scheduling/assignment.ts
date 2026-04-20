@@ -39,14 +39,20 @@ export type TimeSlotInput = {
   timeSlotId: string;
 };
 
+export type SubjectOverrides = {
+  minGroupSize?: number | null;
+  maxCapacity?: number | null;
+};
+
 export type AssignmentInput = {
   students: StudentDemand[];
   teachers: TeacherInput[];
   rooms: RoomInput[];
   timeSlots: TimeSlotInput[];
   compatibilityMatrix: CompatibilityRow[];
-  minGroupSize?: number; // below this, try to mutualize (default 4)
-  maxCapacity?: number; // per-session cap (default 10)
+  minGroupSize?: number; // global default, below this try to mutualize (default 4)
+  maxCapacity?: number; // global default, per-session cap (default 10)
+  subjectOverrides?: Map<string, SubjectOverrides>; // per-subject overrides
 };
 
 // ---- Output types ----
@@ -182,6 +188,11 @@ export function proposeAssignments(input: AssignmentInput): AssignmentOutput {
   );
 
   for (const subjectId of allSubjects) {
+    // Per-subject overrides (fall back to global defaults).
+    const overrides = input.subjectOverrides?.get(subjectId);
+    const subjectMaxCap = overrides?.maxCapacity ?? maxCap;
+    const subjectMinGroup = overrides?.minGroupSize ?? minGroup;
+
     // students needing this subject
     const need = input.students.filter((s) => s.subjectIds.includes(subjectId));
     // group by level
@@ -201,10 +212,10 @@ export function proposeAssignments(input: AssignmentInput): AssignmentOutput {
       while (pool.length > 0) {
         // Try to build a group: start with current level students (up to cap).
         let groupLevels: Level[] = [level];
-        let groupStudents = pool.slice(0, maxCap);
+        let groupStudents = pool.slice(0, subjectMaxCap);
 
         // If under minGroup, try to mutualize with a compatible level.
-        if (groupStudents.length < minGroup) {
+        if (groupStudents.length < subjectMinGroup) {
           for (const other of levelsDesc) {
             if (other === level) continue;
             const otherPool = byLevel.get(other) ?? [];
@@ -217,14 +228,14 @@ export function proposeAssignments(input: AssignmentInput): AssignmentOutput {
             ) {
               continue;
             }
-            const room = maxCap - groupStudents.length;
+            const room = subjectMaxCap - groupStudents.length;
             const take = otherPool.slice(0, room);
             if (take.length === 0) continue;
             groupStudents = [...groupStudents, ...take];
             groupLevels = [...groupLevels, other];
             // remove from the other pool
             byLevel.set(other, otherPool.slice(take.length));
-            if (groupStudents.length >= maxCap) break;
+            if (groupStudents.length >= subjectMaxCap) break;
           }
         }
 
@@ -258,8 +269,8 @@ export function proposeAssignments(input: AssignmentInput): AssignmentOutput {
 
         const rationale =
           groupLevels.length > 1
-            ? `Mutualisation ${levelsLabel(groupLevels, "+")} (${groupStudents.length}/${maxCap})`
-            : `Classe standard ${levelLabel(level)} (${groupStudents.length}/${maxCap})`;
+            ? `Mutualisation ${levelsLabel(groupLevels, "+")} (${groupStudents.length}/${subjectMaxCap})`
+            : `Classe standard ${levelLabel(level)} (${groupStudents.length}/${subjectMaxCap})`;
 
         proposed.push({
           subjectId,

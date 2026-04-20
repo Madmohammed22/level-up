@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { deleteSubject } from "@/server/actions/admin/subjects";
 import { CreateSubjectForm } from "./CreateSubjectForm";
+import { SubjectParamsForm } from "./SubjectParamsForm";
 
 export default async function AdminSubjectsPage() {
   await requireRole("ADMIN");
@@ -43,11 +44,16 @@ export default async function AdminSubjectsPage() {
                     key={s.id}
                     className="flex items-center justify-between px-4 py-3"
                   >
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="font-medium">{s.name}</div>
                       <div className="text-xs text-zinc-500">
                         {s._count.students} élèves · {s._count.teachers} profs
                       </div>
+                      <SubjectParamsForm
+                        id={s.id}
+                        minGroupSize={s.minGroupSize}
+                        maxCapacity={s.maxCapacity}
+                      />
                     </div>
                     {refs === 0 ? (
                       <form action={deleteSubject}>
@@ -60,7 +66,7 @@ export default async function AdminSubjectsPage() {
                         </button>
                       </form>
                     ) : (
-                      <span className="text-xs text-zinc-400">
+                      <span className="text-xs text-zinc-400 shrink-0">
                         en usage
                       </span>
                     )}

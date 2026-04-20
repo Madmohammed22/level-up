@@ -181,8 +181,10 @@ model TeacherProfile {
 // =====================================================================
 
 model Subject {
-  id   String @id @default(cuid())
-  name String @unique // "Maths", "Physique", "Francais"
+  id           String @id @default(cuid())
+  name         String @unique // "Maths", "Physique", "Francais"
+  minGroupSize Int?   // per-subject override (null = use global default)
+  maxCapacity  Int?   // per-subject override (null = use global default)
 
   students         StudentProfile[]     @relation("StudentSubjects")
   teachers         TeacherProfile[]     @relation("TeacherSubjects")

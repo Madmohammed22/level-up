@@ -85,6 +85,7 @@ export type PreviewResult = {
 
 export async function previewAssignments(
   weekStartISO: string,
+  opts?: { minGroupSize?: number; maxCapacity?: number },
 ): Promise<PreviewResult> {
   await requireRole("ADMIN");
   const weekStart = parseWeekStart({ weekStart: weekStartISO });
@@ -99,7 +100,11 @@ export async function previewAssignments(
   if (ctx.input.rooms.length === 0) warnings.push("Aucune salle.");
   if (ctx.input.timeSlots.length === 0) warnings.push("Aucun créneau.");
 
-  const result = proposeAssignments(ctx.input);
+  const result = proposeAssignments({
+    ...ctx.input,
+    ...(opts?.minGroupSize != null && { minGroupSize: opts.minGroupSize }),
+    ...(opts?.maxCapacity != null && { maxCapacity: opts.maxCapacity }),
+  });
 
   // Check collisions against persisted sessions in this week.
   const existingThisWeek = await prisma.session.findMany({
@@ -185,8 +190,21 @@ export async function commitAssignments(
     return { error: (e as Error).message };
   }
 
+  const rawMin = formData.get("minGroupSize");
+  const rawMax = formData.get("maxCapacity");
+  const minGroupSize = rawMin ? Number(rawMin) : undefined;
+  const maxCapacity = rawMax ? Number(rawMax) : undefined;
+
+  if ((minGroupSize ?? 4) > (maxCapacity ?? 10)) {
+    return { error: "Min. groupe ne peut pas dépasser Max. élèves." };
+  }
+
   const ctx = await loadAssignmentContext();
-  const result = proposeAssignments(ctx.input);
+  const result = proposeAssignments({
+    ...ctx.input,
+    ...(minGroupSize != null && !Number.isNaN(minGroupSize) && { minGroupSize }),
+    ...(maxCapacity != null && !Number.isNaN(maxCapacity) && { maxCapacity }),
+  });
   if (result.proposedSessions.length === 0) {
     return { error: "Aucune séance à créer." };
   }
@@ -259,7 +277,7 @@ export async function commitAssignments(
           startAt: c.startAt,
           endAt: c.endAt,
           levels: c.p.levels,
-          maxCapacity: 10,
+          maxCapacity: maxCapacity ?? 10,
           status: "CONFIRMED",
           enrollments: {
             create: c.p.studentIds.map((sid) => ({

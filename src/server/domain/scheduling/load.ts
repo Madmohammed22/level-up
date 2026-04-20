@@ -13,6 +13,7 @@ import type {
   TeacherInput,
   RoomInput,
   TimeSlotInput,
+  SubjectOverrides,
 } from "./assignment";
 import type { CompatibilityRow } from "./compatibility";
 
@@ -95,7 +96,9 @@ export async function loadAssignmentContext(): Promise<LoadedAssignmentContext> 
           compatible: true,
         },
       }),
-      prisma.subject.findMany({ select: { id: true, name: true } }),
+      prisma.subject.findMany({
+        select: { id: true, name: true, minGroupSize: true, maxCapacity: true },
+      }),
     ]);
 
   const students: StudentDemand[] = studentUsers
@@ -146,6 +149,15 @@ export async function loadAssignmentContext(): Promise<LoadedAssignmentContext> 
   }
   const roomNames = new Map(rooms.map((r) => [r.id, r.name]));
   const subjectNames = new Map(subjects.map((s) => [s.id, s.name]));
+  const subjectOverrides = new Map<string, SubjectOverrides>();
+  for (const s of subjects) {
+    if (s.minGroupSize != null || s.maxCapacity != null) {
+      subjectOverrides.set(s.id, {
+        minGroupSize: s.minGroupSize,
+        maxCapacity: s.maxCapacity,
+      });
+    }
+  }
   const timeSlotLabels = new Map<string, string>();
   const timeSlotsRaw = new Map<
     string,
@@ -170,6 +182,7 @@ export async function loadAssignmentContext(): Promise<LoadedAssignmentContext> 
       rooms: roomInputs,
       timeSlots: timeSlotInputs,
       compatibilityMatrix,
+      subjectOverrides,
     },
     studentNames,
     teacherNames,

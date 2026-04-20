@@ -22,6 +22,30 @@ export function CreateSubjectForm() {
         placeholder="Ex: Maths"
         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
       />
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="block text-xs text-zinc-500 mb-1">Min. groupe</label>
+          <input
+            name="minGroupSize"
+            type="number"
+            min={1}
+            max={30}
+            placeholder="4"
+            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-xs text-zinc-500 mb-1">Max. élèves</label>
+          <input
+            name="maxCapacity"
+            type="number"
+            min={1}
+            max={30}
+            placeholder="10"
+            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
       {state?.error ? (
         <p className="text-sm text-red-600" role="alert">
           {state.error}
