@@ -2,6 +2,7 @@
   "name": "level-up",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "NODE_OPTIONS='--dns-result-order=ipv4first' next dev",
     "build": "prisma generate && next build",
@@ -17,7 +18,8 @@
     "db:seed": "NODE_OPTIONS='--dns-result-order=ipv4first' tsx prisma/seed.ts",
     "db:rls": "NODE_OPTIONS='--dns-result-order=ipv4first' tsx prisma/rls.ts",
     "db:studio": "prisma studio",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
