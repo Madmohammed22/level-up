@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export default defineConfig({
   testDir: "./src/tests/e2e",
   fullyParallel: true,
@@ -8,15 +10,39 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "on-first-retry",
   },
+  globalSetup: "./src/tests/e2e/global-setup.ts",
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Smoke tests — no auth needed
+    {
+      name: "smoke",
+      testMatch: "smoke.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Auth setup — seeds DB and logs in as admin
+    {
+      name: "auth-setup",
+      testMatch: "auth.setup.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Scheduling E2E — depends on auth
+    {
+      name: "scheduling",
+      testMatch: "scheduling.spec.ts",
+      dependencies: ["auth-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/admin.json",
+      },
+    },
   ],
   webServer: {
     command: "pnpm dev",
-    url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
